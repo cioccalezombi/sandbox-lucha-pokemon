@@ -1,0 +1,38 @@
+# Estructura del Sandbox de Booking (NJPW)
+
+Este documento detalla el plan inicial para construir la estructura base del simulador, dejando el combate complejo para una fase futura e implementando un "Sandbox de Combate" simplificado.
+
+## Propuesta Técnica
+- **Framework:** React + Vite (rápido, moderno e ideal para empaquetar luego con Electron).
+- **Estilos:** Bootstrap + CSS nativo para una interfaz limpia, rápida y responsiva.
+- **Estado Global:** Context API de React (suficiente para la escala actual, o Zustand si se vuelve complejo).
+- **Persistencia:** LocalStorage (por ahora, hasta integrar la API de sistema de archivos de Electron).
+
+## Cambios Propuestos
+
+### 1. Inicialización del Proyecto
+- Crear proyecto con `npm create vite@latest . -- --template react` en el directorio actual.
+- Instalar `bootstrap` y configurar los importes globales en `main.jsx`.
+
+### 2. Estructura de Datos (Data Model)
+Crear la base de datos de luchadores (roster) siguiendo el modelo del documento conceptual.
+- `src/data/njpw/1980.js`: Roster inicial base.
+- `src/models/Wrestler.js`: Definición o utilidades para manejar la edad, modificadores de skill, etc.
+
+### 3. Interfaz de Usuario (UI) Base
+Componentes principales de la UI:
+- **Layout:** Menú lateral o superior con navegación (Roster, Eventos, Sandbox).
+- **Dashboard/Roster:** Vista para listar los luchadores activos, su estado (salud, edad), y estadísticas.
+- **Vista de Perfil:** Detalles de un luchador (Prime, penalizaciones de edad, stats).
+
+### 4. Sandbox de Combate Simplificado
+Una vista donde el usuario pueda organizar un combate manual sin depender de RNG ni turnos todavía.
+- Seleccionar "Luchador A" vs "Luchador B".
+- Mostrar un panel comparativo de sus stats y modificadores (por edad/prime).
+- Botones de resultado manual: **"Gana Luchador A"** o **"Gana Luchador B"**.
+- Al seleccionar el ganador, un log o resumen temporal registra el resultado (preparando el terreno para el Recap Histórico mensual/anual).
+
+## Plan de Verificación
+- [ ] Ejecutar la aplicación en entorno de desarrollo (`npm run dev`).
+- [ ] Verificar que el roster inicial (1980) cargue correctamente en la interfaz.
+- [ ] Comprobar que el "Sandbox de Combate" permita elegir dos luchadores y emitir un resultado manual sin errores de estado.

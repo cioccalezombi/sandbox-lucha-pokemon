@@ -1,0 +1,52 @@
+# Walkthrough — Cambios al simulador de booking
+
+## Cambios implementados
+
+### 1. ✅ Selección interactiva de Workers del mes
+- Nuevo flujo: se muestran 2 luchadores en formato **card** (igual que el Roster activo)
+- El usuario elige uno → el rechazado vuelve al pool disponible en posición aleatoria
+- El proceso se repite 16 veces hasta completar el plantel del mes
+- Implementado como modal con barra de progreso y lista de ya elegidos
+
+### 2. ✅ Shows: estructura correcta (2 tag + 4 singles)
+- [generateShows](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx#131-178) corregido para garantizar siempre 2 luchas tag y 4 individuales por show
+- Las repeticiones están permitidas tal como se pidió
+
+### 3. ✅ Ranking mensual en ShowsPage
+- Nueva columna lateral en la pestaña de Shows con ranking mensual
+- El ranking se reinicia cada mes (al avanzar de mes o año)
+- El **Show Grande** ahora usa el ranking mensual para definir los contendientes
+
+### 4. ✅ Dashboard: eliminada duplicación de campeones
+- Se eliminó la sección "Campeones actuales" del [YearPanel](file:///c:/dev/sandbox-lucha-pokemon/src/components/YearPanel.jsx#18-143) (que quedaba encima de las acciones)
+- El panel [ChampionsPanel](file:///c:/dev/sandbox-lucha-pokemon/src/components/ChampionsPanel.jsx#59-105) sigue mostrando los campeones correctamente
+
+### 5. ✅ Botones con confirmación (window.confirm)
+- **Reset**: confirmación con texto de advertencia sobre irreversibilidad
+- **Siguiente Mes**: confirmación antes de avanzar
+- **Avanzar Año**: confirmación con el año destino
+
+### 6. ✅ Guardar y cargar partida
+- El auto-save ya existía (localStorage)
+- Ahora la **pantalla de inicio** distingue entre "Nueva Partida" y "Cargar Partida"
+- "Nueva Partida" limpia el localStorage antes de arrancar
+
+### 7. ✅ Pantalla de inicio (StartScreen)
+- Aparece al abrir la app
+- Muestra "Nueva Partida" y "Cargar Partida" (este segundo botón está deshabilitado si no hay guardado)
+- Fondo oscuro con gradiente estético
+
+### 8. ✅ MatchSandbox simplificado
+- Eliminados todos los controles de combate manual (selects, botones de victoria)
+- La página ahora funciona como **Historial de Combates** mostrando todos los resultados registrados
+- Renombrado en el Navbar a "📋 Historial"
+
+## Archivos modificados
+- [GameContext.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx) — lógica central (workerSelection, monthlyPoints, Show Grande mensual)
+- [WorkerSelectionModal.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/WorkerSelectionModal.jsx) — nuevo componente modal
+- [YearPanel.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/YearPanel.jsx) — sin duplicación, con confirmaciones, integra el modal
+- [ShowsPage.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/ShowsPage.jsx) — ranking mensual lateral
+- [MatchSandbox.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/MatchSandbox.jsx) — simplificado a historial
+- [StartScreen.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/StartScreen.jsx) — nuevo componente de pantalla de inicio
+- [App.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/App.jsx) — integra StartScreen con flujo de nueva/cargar partida
+- [Navbar.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Navbar.jsx) — renombramiento de Sandbox a Historial

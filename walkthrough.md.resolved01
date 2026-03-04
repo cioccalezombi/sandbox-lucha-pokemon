@@ -1,0 +1,60 @@
+# Walkthrough: Sistema de Juego Base (Fase 2)
+
+## Qué se construyó
+
+Se implementó el núcleo del simulador: estado global persistente, roster real ampliado, sistema de avance de tiempo y todas las pantallas conectadas entre sí.
+
+---
+
+## Dashboard Principal
+
+![Dashboard con Workers seleccionados](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/dashboard_updated_1772418966307.png)
+
+- **YearPanel:** Muestra año y mes actuales, los 4 campeones, botonera de acción.
+- **Seleccionar Workers del Mes:** Elige aleatoriamente ≤16 luchadores activos (excluye campeones) usando el sistema de selección por pares del concepto.
+- **Avanzar Año:** Envejece el roster, retira automáticamente a mayores de 50 años (y con `retirementYear` histórico), muestra notificación de retiros.
+- **Avanzar Mes:** Avanza el mes dentro del año.
+- **Ranking en tiempo real:** Se actualiza automáticamente al registrar victorias.
+
+---
+
+## Sandbox de Combate integrado
+
+![Resultado en Sandbox](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/sandbox_result_1772418942969.png)
+
+- Usa los workers del mes si están seleccionados, o el roster completo si no.
+- Declarar una victoria suma 1 punto al ganador en el ranking.
+- El registro de combates persiste (año, mes, ganador, perdedor).
+
+---
+
+## Grabación del flujo completo
+
+![Verificación del sistema de juego](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/verificar_sistema_juego_1772418832638.webp)
+
+---
+
+## Archivos creados / modificados
+
+| Archivo | Cambio |
+|---|---|
+| [src/context/GameContext.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx) | Estado global: roster, año, campeones, ranking, save/load automático en localStorage |
+| [src/data/njpw/1980.js](file:///c:/dev/sandbox-lucha-pokemon/src/data/njpw/1980.js) | Ampliado a 20 luchadores reales de NJPW 1980 |
+| [src/components/Dashboard.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Dashboard.jsx) | Nuevo: YearPanel + ranking del año + últimos resultados |
+| [src/components/YearPanel.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/YearPanel.jsx) | Nuevo: controles de avance de año/mes, workers del mes, campeones |
+| [src/components/RosterView.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/RosterView.jsx) | Actualizado: usa GameContext, muestra retirados |
+| [src/components/MatchSandbox.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/MatchSandbox.jsx) | Actualizado: conectado al contexto global, log persistente |
+| [src/components/HistoryView.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/HistoryView.jsx) | Nuevo: récord histórico por año tras cada avance |
+| [src/components/Navbar.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Navbar.jsx) | Actualizado: 4 rutas, badge con año/mes en vivo |
+| [src/App.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/App.jsx) | Actualizado: wrap con GameProvider, 4 rutas |
+
+## Estado del proyecto
+
+- ✅ Roster con 20 luchadores reales (1980), stats y sistema de prime
+- ✅ Estado global persistente (localStorage automático)
+- ✅ Avance de año con retiros automáticos
+- ✅ Selección de workers del mes (sistema por pares)
+- ✅ Ranking del año en tiempo real
+- ✅ Log de combates persistente con año/mes
+- ✅ Historial por año
+- ⏳ Pendiente: campeones editables, shows semanales estructurados, sistema de debuts/regens

@@ -1,0 +1,359 @@
+============================================================
+SIMULADOR HISTÓRICO DE BOOKING – NJPW (1980–∞)
+Documento Unificado de Diseño
+Stack: React + JavaScript + HTML + CSS + Bootstrap + Electron
+============================================================
+
+
+============================================================
+1) ARQUITECTURA GENERAL
+============================================================
+
+Frontend: React
+Lenguaje: JavaScript
+UI: HTML + CSS + Bootstrap
+Build Desktop: Electron
+Estado global recomendado: Context API o Zustand
+Persistencia: LocalStorage o archivos JSON vía Electron FS
+
+
+============================================================
+2) MODELO DE DATOS – LUCHADOR
+============================================================
+
+Estructura base:
+
+{
+  id: string,
+  name: string,
+  birthYear: number,
+  debutYear: number,
+  retirementYear: number | null,
+
+  weightClass: "heavy" | "junior",
+  promotion: "NJPW" | "AJPW" | "NOAH" | "ROH" | "AEW",
+
+
+
+  status: "active" | "injured" | "suspended" | "retired" | "deceased",
+  unavailableWeeks: number,
+
+  titles: {
+    world: number,
+    secondary: number,
+    junior: number,
+    tag: number
+  },
+
+  defenses: {
+    world: number,
+    secondary: number,
+    junior: number,
+    tag: number
+  },
+
+  achievements: []
+}
+
+
+============================================================
+3) SISTEMA DE EDAD Y PRIME
+============================================================
+
+Edad:
+edad = currentYear - birthYear
+
+Penalizaciones:
+
+Si edad < primeStart → -30%
+Si edad entre primeStart y primeEnd → 100%
+Si edad > primeEnd → -20%
+
+effectiveSkill = baseSkill * modifier
+
+Modificadores:
+Pre-prime → 0.7
+Prime → 1.0
+Post-prime → 0.8
+
+Afecta:
+- Resultado de combate
+- Resistencia
+- Probabilidad de lesión
+
+
+============================================================
+4) ORGANIZACIÓN DE ARRAYS POR AÑO
+============================================================
+
+Estructura sugerida:
+
+/data
+   /njpw
+      1980.js   (roster completo activo)
+      1981.js   (solo debutantes)
+      ...
+   /ajpw
+   /noah
+   /roh
+   /aew
+
+Reglas:
+- 1980 contiene roster base completo.
+- 1981+ contienen solo debutantes.
+- Cada año:
+  - Se cargan debutantes.
+  - Se ejecuta sistema de desafíos.
+  - Se aplican retiros por edad (>50).
+  - Se aplican retiros por eventos.
+
+
+============================================================
+5) SISTEMA DE DEBUTS
+============================================================
+
+Por cada debutante:
+
+1) Se muestran stats.
+2) Se sortean 2 luchadores del roster.
+3) Opciones:
+
+A) No incorporarlo
+   → Se retira automáticamente.
+
+B) Intentar incorporación
+   - Elegir cuál descartar. el descartado es retirado del roster.
+   - El otro lo enfrenta.
+   - Si el debutante gana → se incorpora.
+   - Si pierde → vuelve a intentarlo el año siguiente.
+
+
+============================================================
+6) SISTEMA DE REGENS (POST 2026)
+============================================================
+
+Si roster activo < 30 luchadores:
+
+generateRegen(year)
+
+Características:
+- Edad 18–22
+- PrimeStart 24–27
+- PrimeEnd 32–36
+- BaseSkill aleatorio
+- se puede sacar de manera aleatoria un nombre y un apellido de los arrays de roster
+
+Objetivo:
+Mantener ecosistema estable indefinidamente.
+
+
+============================================================
+7) SISTEMA MENSUAL NORMAL
+============================================================
+
+Selección de 16 Workers:
+
+- Se sortean 2 luchadores activos.
+- Se elige 1.
+- El otro vuelve al pool.
+- Repetir hasta tener 16.
+
+Exclusiones:
+- Campeón mundial
+- Campeón secundario
+
+
+============================================================
+8) CARTELERAS SEMANALES (7)
+============================================================
+
+Cada show:
+- 2 luchas Tag (2 vs 2)
+- 4 luchas individuales
+
+Sistema de puntos:
+Victoria = 1 punto
+Tag = 1 punto para cada integrante
+
+Se genera ranking mensual.
+
+
+============================================================
+9) CONTROL O SIMULACIÓN DE COMBATE
+============================================================
+
+Antes de cada lucha:
+
+Opciones:
+- Manejar luchador A
+- Manejar luchador B
+- Simular combate
+
+
+============================================================
+10) SHOW GRANDE
+============================================================
+
+Cartelera:
+
+- Campeón mundial vs #1
+- Campeón secundario vs #3
+- #5 vs #6
+- (#7 + #8) vs (#9 + #10)
+
+Si no hay campeón mundial:
+#1 vs #2 por título vacante
+
+Si no hay campeón secundario:
+#3 vs #4 por título vacante
+
+
+============================================================
+11) EVENTOS POST SHOW GRANDE
+============================================================
+
+Probabilidad base configurable (ej: 8%)
+
+Eventos posibles:
+
+Lesión leve → 1–3 semanas
+Lesión grave → 4–12 semanas
+Suspensión → 2–8 semanas
+Accidente → 4–20 semanas
+Muerte → permanente
+
+Conversión:
+mesesPerdidos = ceil(unavailableWeeks / 4)
+
+Excepción campeones:
+Si lesión < 4 semanas → puede defender.
+Si lesión ≥ 4 semanas → título vacante.
+
+
+============================================================
+12) MESES ESPECIALES
+============================================================
+
+Mes 3 – New Japan Cup
+Eliminación directa (16 o 32)
+Ganador obtiene oportunidad titular.
+
+Mes 6 – Best of the Super Juniors
+- 8 juniors
+- Round robin
+- Final #1 vs #2
+- Solo aquí se disputa el título Jr
+Si campeón no puede participar → vacante.
+
+Mes 9 – G1 Climax
+- Selección estilo workers (entre 4)
+- Hasta 10 luchadores
+- Round robin
+- Final
+
+Mes 12 – World Tag League
+- 8 parejas aleatorias
+- Solo heavyweights
+- Final
+- Título tag solo se disputa aquí.
+
+
+============================================================
+13) SISTEMA DE INVASIONES
+============================================================
+
+Probabilidad mensual: 1%
+
+Empresas según año:
+
+1980–1999 → AJPW
+2000–2017 → AJPW / NOAH / ROH
+2018+ → AJPW / NOAH / ROH / AEW
+
+Cada empresa tiene roster anual propio.
+
+Evento:
+5 vs 5 NJPW vs Empresa invasora.
+
+Reglas:
+- Invasores derrotados pueden usarse el mes siguiente.
+- No pueden participar en BOSJ ni WTL.
+- Si ganan un título:
+    - Permanecen en shows grandes.
+    - Defienden hasta perder.
+    - Al perder → salen del roster.
+- Si no compiten por título:
+    - Solo participan ese mes.
+
+
+============================================================
+14) SISTEMA DE RETIRO
+============================================================
+
+Retiro automático:
+Edad ≥ 50
+
+Retiro aleatorio:
+- Evento grave
+- Probabilidad aumenta >45 años
+
+Se guarda historial completo.
+
+
+============================================================
+15) RECAP HISTÓRICO
+============================================================
+
+Después de cada show grande o torneo:
+
+{
+  year,
+  month,
+  eventName,
+  results: [],
+  champions: {},
+  defenses: {},
+  injuries: [],
+  retirements: []
+}
+
+Permite modo Historia / Estadísticas.
+
+
+============================================================
+16) FLUJO ANUAL
+============================================================
+
+Inicio de Año
+ → Debuts
+ → Mes 1
+ → Mes 2
+ → Mes 3 (evento especial)
+ → ...
+ → Mes 12
+ → Envejecimiento
+ → Retiros
+ → Año siguiente
+
+
+============================================================
+RESULTADO FINAL
+============================================================
+
+Simulador generacional histórico
+Gestión estratégica
+Narrativa emergente
+Eventos impredecibles
+Ecosistema multiempresa
+Progresión infinita post-2026
+Totalmente viable en React + Electron sin backend obligatorio.
+
+se aceptan sugerencias para implementar de la mejor manera cada
+ punto de este documento. por favor haceme todas las ideas que 
+consideres para que todo quede claro y podamos llegar a los mejores 
+resultados posibles.
+
+Y FUNCION DE GUARDAR Y CARGAR QUE ME OLVIDE!!!!!!!!!!!!
+============================================================
+FIN DEL DOCUMENTO
+============================================================

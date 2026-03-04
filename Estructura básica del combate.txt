@@ -1,0 +1,453 @@
+1️⃣ Estructura básica del combate
+
+El combate tiene dos fases:
+
+🔹 Fase 1 — Pre-Combate (Deck Phase)
+
+Cada lado:
+
+Roba 3 cartas de Estado → elige 1
+
+Roba 3 cartas de Movimiento → elige 1
+
+Se aplican los efectos de Estado antes del turno 1
+
+La carta de Movimiento queda disponible para usar durante el combate (1 uso)
+
+Ya hay RNG aquí:
+
+Sorteo de cartas
+
+Elección CPU ponderada por situación
+
+🔹 Fase 2 — Combate por Turnos
+
+Cada turno:
+
+Ambos eligen acción
+
+Se calcula iniciativa (con RNG)
+
+Se resuelven acciones
+
+Se aplican efectos por turno
+
+Se chequea pin o fin de combate
+
+2️⃣ Concepto base adaptado al wrestling
+
+Traducción del sistema tipo Pokémon:
+
+Pokémon	Wrestling
+HP	Resistencia
+Tipo	Estilo
+Ataques	Acciones
+Objetos	Cartas
+Crítico	Mini crítico RNG
+Cambio	Tag
+
+No existe momentum.
+
+La variabilidad y remontada vienen de:
+
+RNG controlado
+
+Cartas elegidas
+
+Uso táctico del special
+
+Pin con enfrentamiento de scores
+
+3️⃣ Estadísticas del luchador
+
+Cada luchador tiene:
+
+hpMax
+
+power
+
+technique
+
+speed
+
+toughness
+
+level
+
+style
+
+Rol del nivel
+
+El nivel:
+
+NO domina el daño.
+
+Influye moderadamente en:
+
+Pin Score
+
+Kickout Score
+
+Save Score
+
+Block Save Score
+
+Impacto recomendado:
++1 a +2 por nivel en esas fórmulas.
+
+4️⃣ Sistema de Turnos (con RNG en todo)
+
+Cada turno incluye RNG en:
+
+Iniciativa
+
+Precisión
+
+Daño
+
+Efectos secundarios
+
+Pin
+
+Save
+
+Iniciativa
+initiative = speed + rand(-2,+2)
+5️⃣ Cálculo de daño (con afinidad y RNG)
+
+Calcular daño base:
+
+raw = baseDamage × (1 + atkStat/10) × affinityMult
+
+Aplicar variación RNG:
+
+variance = rand(0.90,1.10)
+damage = raw × variance
+
+Aplicar mitigación por defensa:
+
+damage -= defender.toughnessFactor
+
+Aplicar mini crítico (RNG):
+
+critChance = 3% + speed × 0.5%
+
+Afinidad:
+
+x1.25 daño
+
++5% precisión
+
++2% crit
+
+6️⃣ Estilos / Clases
+
+Propuesta base:
+
+Powerhouse
+
+Alto power
+
+Baja speed
+
+Afinidad con Lariat, Powerbomb
+
+Technician
+
+Alto technique
+
+Afinidad con sumisiones
+
+High Flyer
+
+Alta speed
+
+Afinidad con ataques aéreos
+
+Brawler
+
+Buen power
+
+Chance de stun mayor
+
+Submission Specialist
+
+Daño por turno
+
+Mayor efecto en pin control
+
+Afinidad modifica:
+
+Daño
+
+Precisión
+
+Pin Score
+
+7️⃣ Orden de acción
+
+Velocidad + RNG:
+
+initiative = speed + rand(-2,+2)
+
+Empate → random.
+
+La defensa se activa antes del daño aunque ataques segundo.
+
+8️⃣ Estados alterados (mazo de Estado)
+
+Cartas de Estado modifican:
+
+Stats base
+
+Efectos por turno
+
+Modificadores a pin/save
+
+Ejemplo:
+
+Inspirado:
+
++1 power
+
+Fiebre:
+
+-1 hp por turno
+
+Adrenalina:
+
++5 pinScore
+
+Los estados también pueden modificar RNG:
+
++5% precisión
+
++3% crit
+
+-5% kickout
+
+9️⃣ Sistema de comeback (sin momentum)
+
+La remontada surge de:
+
+RNG controlado
+
+Special usado en el momento correcto
+
+Defensa oportuna
+
+Pin bien ejecutado
+
+No es determinista.
+Pero tampoco caótico.
+
+🔟 Sistema de Pin (con nivel y RNG)
+Condición
+
+Solo si:
+
+HP <= 40%
+
+o está aturdido
+
+Pin Score
+pinScore =
+50
++ dañoUltimoTurno × 1.2
++ power × 3
++ technique × 2
++ level × 2
++ affinityBonus
++ rand(-10,+10)
+Kickout Score
+kickoutScore =
+55
++ toughness × 4
++ technique × 2
++ level × 2
++ hpPercent × 40
++ rand(-10,+10)
+
+Si pinScore > kickoutScore → gana atacante.
+
+El nivel influye, pero no define.
+
+11️⃣ Sistema Tag + Save
+
+Cuando hay pin:
+
+Compañero puede intentar SAVE.
+
+Save Score
+50
++ speed × 4
++ technique × 2
++ level × 2
++ teamSynergy × 4
++ rand(-15,+15)
+Block Score
+50
++ power × 3
++ speed × 2
++ level × 1.5
++ rand(-15,+15)
+
+Si saveScore > blockScore → salva.
+
+Regla:
+
+1 save por combate
+
+o cooldown
+
+12️⃣ ¿Está definido antes de empezar?
+
+No.
+
+Porque:
+
+Todas las acciones tienen RNG
+
+Pin es enfrentamiento probabilístico
+
+Save tiene enfrentamiento probabilístico
+
+Variación de daño
+
+Precisión variable
+
+Afinidad afecta probabilidades, no garantiza
+
+Puede estar inclinado.
+Nunca garantizado.
+
+13️⃣ Resumen Final del Sistema
+
+Combate =
+
+Pre-fase estratégica (cartas)
++
+Turnos con RNG controlado
++
+Afinidad que inclina probabilidades
++
+Nivel como modificador secundario
++
+Pin y Save como enfrentamientos probabilísticos
+
+Es estratégico.
+Es incierto.
+Es dramático.
+No es determinista.
+
+✅ CHECKLIST COMPLETO DE IMPLEMENTACIÓN
+📦 Datos
+Luchador
+
+ id
+
+ name
+
+ style
+
+ level
+
+ hpMax
+
+ power
+
+ technique
+
+ speed
+
+ toughness
+
+ currentHP
+
+ selectedStateCard
+
+ selectedMoveCard
+
+ specialUsed
+
+ statusEffects[]
+
+Carta de Estado
+
+ id
+
+ name
+
+ description
+
+ statModifiers{}
+
+ hpPerTurn
+
+ pinMod
+
+ saveMod
+
+ accuracyMod
+
+ critMod
+
+Carta de Movimiento
+
+ id
+
+ name
+
+ baseDamage
+
+ baseAccuracy
+
+ affinityStyle
+
+ affinityMult
+
+ effect (stun, bleed)
+
+ uses (1)
+
+Tag Team
+
+ teamSynergy
+
+ saveAvailable
+
+🧠 Funciones necesarias
+
+ rollInt(min,max)
+
+ rollFloat(min,max)
+
+ clamp()
+
+ calcInitiative()
+
+ calcHitChance()
+
+ calcDamage()
+
+ applyStateEffects()
+
+ attemptPin()
+
+ attemptSave()
+
+ resolveTurn()
+
+ cpuChooseAction()
+
+🎮 Reglas de Balance
+
+ Hit chance clamp 35–95%
+
+ Variación daño 0.90–1.10
+
+ Afinidad daño máx 1.35
+
+ Nivel impacto moderado (+1 o +2)
+
+ Save limitado

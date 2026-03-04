@@ -1,0 +1,22 @@
+export const roster2007 = [{
+  id: "tomoaki_honma",
+  name: "Tomoaki Honma",
+  birthYear: 1976,
+  debutYear: 1997,
+  retirementYear: null,
+  weightClass: "heavy",
+  promotion: "NJPW",
+  status: "active",
+  unavailableWeeks: 0,
+  style: "Brawler",
+  level: 8,
+  hpMax: 118,
+  power: 8,
+  technique: 7,
+  speed: 6,
+  toughness: 9,
+  titles:   { world: 0, secondary: 0, junior: 0, tag: 0 },
+  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+  achievements: []
+},
+];

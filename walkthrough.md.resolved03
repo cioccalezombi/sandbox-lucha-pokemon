@@ -1,0 +1,60 @@
+# Walkthrough: Fase 4 - Torneos y Eventos Aleatorios
+
+## Qué se construyó
+
+El simulador ahora cuenta con **Meses Especiales** donde no se realizan shows semanales estándar, sino que se disputa directamente un torneo de prestigio (como el G1 Climax o la New Japan Cup). Además, se añadió un sistema de **Eventos Aleatorios** de estilo *roguelike* para dar imprevisibilidad al booking.
+
+---
+
+## 🏆 Sistema de Torneos
+
+Se habilitaron cuatro torneos anuales programados en el calendario oficial:
+1. **New Japan Cup (Mes 3):** Torneo de eliminación simple de 8 participantes abierto a todo peso.
+2. **Best of the Super Juniors (Mes 6):** Round-robin exclusivo para categoría "Junior".
+3. **G1 Climax (Mes 9):** Torneo round-robin más prestigioso de NJPW.
+4. **World Tag League (Mes 12):** Torneo en formato round-robin por equipos (Tag Team).
+
+### ¿Cómo funcionan en la UI?
+- **Aviso en Dashboard:** El mes especial se destaca con un ícono característico en el YearPanel.
+- **Página de Shows:** Al ingresar a `/shows` en un mes de torneo, la interfaz avisa que este mes sustituye los combates semanales tradicionales e invita a generar la "Llave" o el "Fixture".
+- **Vistas Especializadas ([TournamentView](file:///c:/dev/sandbox-lucha-pokemon/src/components/TournamentView.jsx#199-217)):**
+  - **Eliminación Simple:** Se renderiza un Bracket visual donde se resuelve Cuartos de Final -> Semifinales -> Final.
+  - **Round Robin:** Genera tabs con jornadas (Día 1, Día 2, etc.), un stand de posiciones automático (PJ, Pts) y, finalmente, un tab para la Gran Final entre los 2 mejores.
+
+---
+
+## ⚠️ Sistema de Eventos y Lesiones
+
+La progresión real de un simulador de wrestling requiere imprevistos.
+
+- **Generación:** Al avanzar de mes (`Siguiente Mes` o `Avanzar Año`), hay un **20% de probabilidad** mensual de que ocurra una eventualidad negativa para un luchador aleatorio activo.
+- **Tipos de Eventos:** 
+  1. *Lesión leve* (1 a 3 meses de baja).
+  2. *Lesión grave* (4 a 8 meses de baja). Si el luchador tenía un cinturón, éste es **automáticamente declarado Vacante**.
+  3. *Suspensión* (1 a 4 meses de baja).
+- **Impacto visual:**
+  - El **Roster** refleja a los luchadores caídos bloqueándolos semi-transparentes y marcando su motivo (Lesionado/Suspendido) y el mes/año exacto de su fecha de regreso (no podrán ser seteados temporalmente como champions ni pickeados).
+  - El **Dashboard** ahora incluye un panel tipo *feed* debajo de los campeonatos: **📰 Últimas Noticias**, que mostrará los 5 eventos más recientes, incluyendo las noticias de cuando algún luchador recibe el alta médica (`✅`).
+
+---
+
+## Pruebas y Grabaciones
+
+````carousel
+![Torneo: New Japan Cup Generado](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/tournaments_final_validation_1772423185096.webp)
+<!-- slide -->
+![Torneo: New Japan Cup Resuelto y Error Log Fix](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/tournaments_and_events_1772421814873.webp)
+````
+
+---
+
+## Archivos Reestructurados (Fase 4)
+
+| Archivo | Cambio principal |
+|---|---|
+| [GameContext.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx) | Integración de métodos de torneo (GENERATE_TOURNAMENT, RESOLVE_TOURNAMENT_MATCH) y el helper [processEvents](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx#77-143) en ADVANCE_MONTH. |
+| [TournamentModel.js](file:///c:/dev/sandbox-lucha-pokemon/src/models/TournamentModel.js) | Nuevo modelo de negocio puro (funciones de pickRandoms, algoritmos de generación de round robins y tag robin). |
+| [ShowsPage.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/ShowsPage.jsx) | Condicional de render para mostrar [TournamentView](file:///c:/dev/sandbox-lucha-pokemon/src/components/TournamentView.jsx#199-217) cuando corresponde a lugar de [MonthlyShows](file:///c:/dev/sandbox-lucha-pokemon/src/components/MonthlyShows.jsx#128-219). |
+| [TournamentView.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/TournamentView.jsx) | Nueva UI que lee torneos activos y renderiza brackets o tablas de posiciones según el tipo. |
+| [EventLogPanel.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/EventLogPanel.jsx) | Nuevo panel del feed de noticias de lesiones en Dashboard. |
+| [RosterView.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/RosterView.jsx) | Lógica extra para alertar lesiones/suspensiones con `alert-danger` y opacity. |

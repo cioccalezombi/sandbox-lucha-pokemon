@@ -1,0 +1,60 @@
+# Tareas del Proyecto: Sandbox de Booking
+
+## Fase 1 – Base ✅
+- [x] 1. Inicializar Proyecto React + Vite
+- [x] 2. Configurar Modelo de Datos y Roster (4 luchadores prueba)
+- [x] 3. Interfaz Base (Navbar, Roster View)
+- [x] 4. Match Sandbox (selección manual de ganador)
+
+## Fase 2 – Sistema de Juego
+- [/] 5. GameContext (estado global)
+  - [ ] currentYear, roster activo, campeones, historial
+  - [ ] Guardar/Cargar via LocalStorage
+- [ ] 6. Roster 1980 ampliado
+  - [ ] 20+ luchadores reales de NJPW 1980
+- [ ] 7. Sistema de Avance de Año
+  - [ ] Envejecimiento (currentYear + 1)
+  - [ ] Retiro automático edad ≥ 50
+  - [ ] Retiro aleatorio (probabilidad aumenta >45)
+  - [ ] Panel de eventos del año (lesiones, retiros)
+- [ ] 8. Sistema Mensual
+  - [ ] Seleccionar 16 workers del roster (excl. campeones)
+  - [ ] Generar 7 shows (2 tag + 4 singles por show)
+  - [ ] Sistema de puntos (victoria = 1 punto)
+  - [ ] Ranking mensual generado al final
+- [x] 9. Integración con Match Sandbox
+  - [x] El sandbox usa los workers del mes activo
+  - [x] Los resultados manuales alimentan el ranking
+
+## Fase 3 – Shows y Campeones
+- [/] 10. Asignación de Campeones desde la UI
+  - [ ] Modal/selector para asignar campeón por categoría
+  - [ ] Champions pueden vaciarse o cambiarse
+- [ ] 11. Sistema de Shows Mensuales
+  - [ ] Generar carteleras (7 shows: 2 tag + 4 singles)
+  - [ ] Pairing automático de los workers del mes
+  - [ ] Botón por combate: declarar ganador manualmente
+  - [ ] Tracking de show # completado en el mes
+- [x] 12. Show Grande (fin de mes)
+  - [x] Generado automáticamente según ranking
+  - [x] Lógica: #1 vs Campeón, #3 vs Campeón Sec, etc.
+  - [x] Resultado actualiza campeones
+
+## Fase 4 – Torneos y Eventos
+- [x] 13. Detección de Meses Especiales
+  - [x] Aviso en YearPanel cuando el mes tiene torneo
+  - [x] Botón para iniciar el torneo del mes
+- [x] 14. Torneos de Eliminación (New Japan Cup, mes 3)
+  - [x] Bracket de 16 participantes
+  - [x] Resolver ronda a ronda manualmente
+  - [x] Ganador recibe oportunidad titular
+- [x] 15. Torneos Round-Robin (G1 Climax mes 9, BOSJ mes 6)
+  - [x] Standings con puntos
+  - [x] Final entre los 2 primeros
+- [x] 16. World Tag League (mes 12)
+  - [x] 8 parejas aleatorias del roster heavy
+  - [x] Round-robin por equipos, final
+- [x] 17. Eventos Post-Show Grande
+  - [x] Probabilidad base de evento (20% al mes de sacar alguie al azar)
+  - [x] Tipos: lesión leve, grave, suspensión
+  - [x] Aplicar unavailableWeeks al luchador

@@ -1,0 +1,39 @@
+# Walkthrough: Estructura Base del Sandbox
+
+## Qué se construyó
+
+Se creó desde cero la estructura base del **Simulador Histórico de Booking (NJPW)** usando **React + Vite + Bootstrap**. La aplicación está lista para correr localmente con `npm run dev`.
+
+## Pantallas funcionales
+
+### 1. Roster Base (`/`)
+
+![Roster Activo 1980](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/homepage_roster_base_1772417871373.png)
+
+- Lista el roster inicial de 1980 (4 luchadores de prueba).
+- Cada tarjeta muestra: nombre, estilo, clase (heavy/junior), edad, estado de Prime y las 4 estadísticas base (**POW, TEC, SPD, TOU**) con los **modificadores de edad aplicados** (Pre-Prime -30%, Prime 100%, Post-Prime -20%).
+
+### 2. Match Sandbox (`/sandbox`)
+
+![Sandbox de Combate](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/sandbox_page_empty_1772417886352.png)
+
+- Dos selectores: **Lado Rojo (Local)** y **Lado Azul (Visitante)**.
+- Al elegir los dos luchadores aparece un panel con sus stats y los botones para **declarar victoria** manualmente.
+- Un **Registro del Booking Mensual** guarda todos los resultados de la sesión en orden cronológico.
+
+## Archivos creados
+
+| Archivo | Descripción |
+|---|---|
+| [src/data/njpw/1980.js](file:///c:/dev/sandbox-lucha-pokemon/src/data/njpw/1980.js) | Roster inicial con 4 luchadores (Inoki, Fujinami, Tiger Mask, Stan Hansen) |
+| [src/models/Wrestler.js](file:///c:/dev/sandbox-lucha-pokemon/src/models/Wrestler.js) | Utilidades: cálculo de edad, modificador de prime, stats efectivos |
+| [src/components/Navbar.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Navbar.jsx) | Barra de navegación con rutas |
+| [src/components/RosterView.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/RosterView.jsx) | Vista de tarjetas del roster activo |
+| [src/components/MatchSandbox.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/MatchSandbox.jsx) | Pantalla de booking manual |
+
+## Próximos pasos sugeridos
+
+- Ampliar el roster de 1980 con más luchadores reales.
+- Implementar el sistema de avance de año (envejecimiento, retiros, debuts).
+- Agregar función de **Guardar y Cargar** el estado de la partida (LocalStorage).
+- Cuando esté listo: conectar el sistema de combate por turnos descrito en el documento de mecánicas.

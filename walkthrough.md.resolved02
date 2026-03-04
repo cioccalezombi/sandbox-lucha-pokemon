@@ -1,0 +1,65 @@
+# Walkthrough: Sistema de Shows y Campeones (Fase 3)
+
+## Qué se construyó
+
+Implementación completa del ciclo mensual de booking: asignación de campeones, shows semanales y Show Grande.
+
+---
+
+## Shows Semanales funcionando
+
+![Shows Semanales con tabs y combates resueltos](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/shows_weekly_resolved_1772419688534.png)
+
+- Botón **"Generar 7 Shows Semanales"** crea la cartelera completa del mes (2 tag + 4 singles por show).
+- Tabs de navegación entre shows con ✅ verde cuando todos los combates del show están resueltos.
+- Barra de progreso en el header (ej: "2 de 7 shows").
+
+---
+
+## Show Grande al final del mes
+
+![Show Grande con campeonatos](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/shows_grande_1772419698989.png)
+
+- Botón **"⭐ Generar Show Grande"** arma la cartelera final basándose en el ranking del año.
+- Lógica de emparejamiento:
+  - **Campeón Mundial** vs retador **#1** (o vacante **#1 vs #2**)
+  - **Campeón Secundario** vs retador **#3** (o vacante **#3 vs #4**)
+  - Semi-estelar: **#5 vs #6**
+  - Tag final con los siguientes del ranking
+- **Bug corregido:** se garantiza que ningún luchador aparezca vs sí mismo.
+
+---
+
+## Asignación de Campeones
+
+- Panel de campeones clickeable en el Dashboard.
+- Click en cualquier tarjeta de título abre un modal para seleccionar el campeón del roster activo o dejarlo vacante.
+
+---
+
+## Grabación del flujo completo
+
+![Verificación de Shows y Campeones](file:///C:/Users/Feder/.gemini/antigravity/brain/b77074e4-aada-4d28-a0c0-d91bbcc6fe7f/verificar_shows_campeones_1772419473635.webp)
+
+---
+
+## Archivos nuevos / modificados (Fase 3)
+
+| Archivo | Cambio |
+|---|---|
+| [src/context/GameContext.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/context/GameContext.jsx) | Nuevas acciones: `GENERATE_SHOWS`, `GENERATE_SHOW_GRANDE`, `RESOLVE_SHOW_MATCH`, `SET_CURRENT_SHOW`. Fix bug Show Grande. |
+| [src/components/ChampionsPanel.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/ChampionsPanel.jsx) | Nuevo: panel con modal para editar campeones |
+| [src/components/MonthlyShows.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/MonthlyShows.jsx) | Nuevo: UI completa de 7 shows + Show Grande con tabs |
+| [src/components/ShowsPage.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/ShowsPage.jsx) | Nuevo: página `/shows` |
+| [src/components/Dashboard.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Dashboard.jsx) | ChampionsPanel integrado |
+| [src/App.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/App.jsx) + [Navbar.jsx](file:///c:/dev/sandbox-lucha-pokemon/src/components/Navbar.jsx) | Ruta `/shows` y link en navbar |
+
+## Flujo completo del ciclo mensual
+
+```
+Dashboard → Seleccionar Workers → ir a Shows
+→ Generar 7 Shows Semanales → resolver combate a combate
+→ Generar Show Grande → resolver campeonatos
+→ Actualizar campeones en Dashboard
+→ Siguiente Mes / Avanzar Año
+```
