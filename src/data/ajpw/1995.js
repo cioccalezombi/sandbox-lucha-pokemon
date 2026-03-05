@@ -1,0 +1,45 @@
+export const roster1995 = [
+{
+id: "rob_van_dam",
+name: "Rob Van Dam",
+birthYear: 1970,
+debutYear: 1990,
+retirementYear: null,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "High Flyer",
+level: 10,
+hpMax: 100,
+power: 6,
+technique: 8,
+speed: 10,
+toughness: 7,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "maunakea_mossman",
+name: "Maunakea Mossman",
+birthYear: 1975,
+debutYear: 1994,
+retirementYear: null,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "All-Rounder",
+level: 4,
+hpMax: 80,
+power: 5,
+technique: 5,
+speed: 6,
+toughness: 5,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+}
+]

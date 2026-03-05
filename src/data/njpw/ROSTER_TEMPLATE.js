@@ -56,7 +56,6 @@
 
 export const rosterXXXX = [
 
-  // ── MAIN EVENTERS ──────────────────────────────────────────────────
   {
     id: "nombre_apellido",         // ← mismo ID en todos los años
     name: "Nombre Apellido",
