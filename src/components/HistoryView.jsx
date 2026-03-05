@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion } from '../context/GameContext';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -8,6 +8,7 @@ const MONTH_NAMES = [
 
 const HistoryView = () => {
   const { state } = useGame();
+  const promo = useActivePromotion();
 
   return (
     <div className="container fade-in" style={{ maxWidth: '720px' }}>
@@ -21,13 +22,13 @@ const HistoryView = () => {
         </div>
       </div>
 
-      {state.yearHistory.length === 0 ? (
+      {(promo.yearHistory || []).length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', fontFamily: 'var(--display)', fontStyle: 'italic', color: 'var(--ink-3)', fontSize: '1.1rem' }}>
           No hay ediciones anteriores.<br/>
           <small style={{ fontSize: '0.8rem' }}>Avanzá el año para registrar el primer anuario.</small>
         </div>
       ) : (
-        [...state.yearHistory].reverse().map(yr => (
+        [...(promo.yearHistory || [])].reverse().map(yr => (
           <div key={yr.year} style={{ marginBottom: '40px' }}>
             {/* Year headline */}
             <div style={{
@@ -68,10 +69,10 @@ const HistoryView = () => {
                 </div>
                 <div style={{ columns: '2', columnGap: '24px', columnRule: '1px solid #c8b890' }}>
                   {yr.matchLog.map((r, i) => {
-                    const winner = state.roster.find(w => w.id === r.winnerId)
-                      || state.retiredRoster.find(w => w.id === r.winnerId);
-                    const loser = state.roster.find(w => w.id === r.loserId)
-                      || state.retiredRoster.find(w => w.id === r.loserId);
+                    const winner = (promo.roster || []).find(w => w.id === r.winnerId)
+                      || (promo.retiredRoster || []).find(w => w.id === r.winnerId);
+                    const loser = (promo.roster || []).find(w => w.id === r.loserId)
+                      || (promo.retiredRoster || []).find(w => w.id === r.loserId);
                     return (
                       <div
                         key={r.id}

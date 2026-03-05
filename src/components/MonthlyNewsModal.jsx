@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion, useActivePromotionConfig } from '../context/GameContext';
 
 const MONTH_NAMES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -77,9 +77,12 @@ const Article = ({ evt, large }) => {
 
 const MonthlyNewsModal = () => {
   const { state, dispatch } = useGame();
-  const { pendingMonthEvents, currentYear, currentMonth } = state;
+  const promo = useActivePromotion();
+  const promoConfig = useActivePromotionConfig();
+  const { currentYear, currentMonth } = state;
+  const pendingMonthEvents = promo?.pendingMonthEvents;
 
-  if (!pendingMonthEvents || pendingMonthEvents.length === 0) return null;
+  if (!promo || !pendingMonthEvents || pendingMonthEvents.length === 0) return null;
 
   const close = () => dispatch({ type: 'CLEAR_MONTH_EVENTS' });
 

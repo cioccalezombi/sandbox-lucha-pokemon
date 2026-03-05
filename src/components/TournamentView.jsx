@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion } from '../context/GameContext';
 import { getEffectiveLevel } from '../models/Wrestler';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -368,7 +368,8 @@ export const RoundRobinView = ({ tournament }) => {
 
 export const TournamentView = () => {
   const { state } = useGame();
-  const t = state.activeTournament;
+  const promo = useActivePromotion();
+  const t = promo.activeTournament;
 
   if (!t) return null;
 

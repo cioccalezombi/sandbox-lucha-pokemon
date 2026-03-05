@@ -1,6 +1,6 @@
 import MonthlyShows from './MonthlyShows';
 import { TournamentView } from './TournamentView';
-import { useGame, SPECIAL_MONTHS } from '../context/GameContext';
+import { useGame, useActivePromotion, useActivePromotionConfig } from '../context/GameContext';
 import { getEffectiveLevel } from '../models/Wrestler';
 import { Link } from 'react-router-dom';
 
@@ -12,7 +12,9 @@ const MONTH_NAMES = [
 // ── G1 Draft UI ───────────────────────────────────────────────────────────────
 const G1DraftView = () => {
   const { state, dispatch } = useGame();
-  const { g1DraftOptions, g1DraftSelected, g1DraftTarget, currentYear } = state;
+  const promo = useActivePromotion();
+  const { g1DraftOptions, g1DraftSelected, g1DraftTarget } = promo;
+  const currentYear = state.currentYear;
 
   const choose = (id) => dispatch({ type: 'CHOOSE_G1_DRAFT', payload: { chosenId: id } });
   const cancel = () => dispatch({ type: 'CANCEL_G1_DRAFT' });
@@ -21,7 +23,7 @@ const G1DraftView = () => {
     <div className="card shadow-sm border-0">
       <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
         <div>
-          <h5 className="mb-0 fw-bold" style={{ color: '#faf6ed' }}>G1 Climax — Draft de Participantes</h5>
+          <h5 className="mb-0 fw-bold" style={{ color: '#faf6ed' }}>Draft de Participantes</h5>
           <small style={{ color: 'rgba(255,255,255,0.55)' }}>Elegí 1 de 3 — los otros vuelven al pool</small>
         </div>
         <span className="badge bg-warning text-dark fs-6">
@@ -29,10 +31,9 @@ const G1DraftView = () => {
         </span>
       </div>
 
-      {/* Opciones para elegir */}
       <div className="card-body">
         <h6 className="text-muted text-uppercase fw-bold mb-3" style={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-          ¿Quién entra al G1?
+          ¿Quién entra al torneo?
         </h6>
         <div className="row g-3 mb-4">
           {g1DraftOptions.map(w => {
@@ -60,7 +61,6 @@ const G1DraftView = () => {
           })}
         </div>
 
-        {/* Seleccionados hasta ahora */}
         {g1DraftSelected.length > 0 && (
           <div>
             <h6 className="text-muted text-uppercase fw-bold mb-2" style={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
@@ -88,8 +88,8 @@ const G1DraftView = () => {
 };
 
 const MonthlyRanking = () => {
-  const { state } = useGame();
-  const ranking = [...state.roster]
+  const promo = useActivePromotion();
+  const ranking = [...(promo.roster || [])]
     .filter(w => w.status === 'active')
     .sort((a, b) => (b.monthlyPoints || 0) - (a.monthlyPoints || 0))
     .slice(0, 10);
@@ -125,8 +125,12 @@ const MonthlyRanking = () => {
 
 const ShowsPage = () => {
   const { state, dispatch } = useGame();
-  const { currentYear, currentMonth, monthlyWorkers, activeTournament, monthlyEventSeries, g1DraftActive } = state;
-  const specialMonthConfig = SPECIAL_MONTHS[currentMonth];
+  const promo = useActivePromotion();
+  const promoConfig = useActivePromotionConfig();
+  const { currentYear, currentMonth } = state;
+  const { monthlyWorkers, activeTournament, monthlyEventSeries, g1DraftActive } = promo;
+
+  const specialMonthConfig = promoConfig?.specialMonths?.[currentMonth];
 
   const handleSelectWorkers = () => dispatch({ type: 'ADVANCE_MONTH_AND_SELECT' });
 

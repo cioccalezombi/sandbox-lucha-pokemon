@@ -12,7 +12,7 @@ import EventAlert from './components/EventAlert';
 import MonthlyNewsModal from './components/MonthlyNewsModal';
 import './index.css';
 
-const SAVE_KEY = 'njpw_booking_state';
+const SAVE_KEY = 'wrestling_observer_state';
 
 const hasSavedGame = () => {
   try { return !!localStorage.getItem(SAVE_KEY); } catch (_) { return false; }

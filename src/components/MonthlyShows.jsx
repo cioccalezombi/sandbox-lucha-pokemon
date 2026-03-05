@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion } from '../context/GameContext';
 import ConfirmModal from './ConfirmModal';
 import { getEffectiveLevel } from '../models/Wrestler';
 
@@ -177,7 +177,8 @@ const MatchRow = ({ match, showIndex, isGrande, currentYear }) => {
 // ─── Vista completa del show actual ─────────────────────────────────────────
 const MonthlyShows = () => {
   const { state, dispatch } = useGame();
-  const { monthlyShows, currentShowIndex } = state;
+  const promo = useActivePromotion();
+  const { monthlyShows, currentShowIndex } = promo;
   const [confirmAdv, setConfirmAdv] = useState(false);
 
   const currentShow = monthlyShows.find(s => s.index === currentShowIndex);

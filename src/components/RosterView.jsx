@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion } from '../context/GameContext';
 import { getEffectiveStat, getPrimeStatus, calculateAge, getEffectiveLevel } from '../models/Wrestler';
 
 const styleColors = {
@@ -12,7 +12,9 @@ const styleColors = {
 
 const RosterView = () => {
   const { state } = useGame();
-  const { currentYear, roster } = state;
+  const promo = useActivePromotion();
+  const { currentYear } = state;
+  const roster = promo.roster || [];
   const active = roster.filter(w => w.status !== 'retired');
 
   return (
@@ -92,13 +94,13 @@ const RosterView = () => {
         })}
       </div>
 
-      {state.retiredRoster.length > 0 && (
+      {(promo.retiredRoster || []).length > 0 && (
         <div className="mt-5">
           <h5 className="text-muted text-uppercase fw-bold mb-3" style={{fontSize:'0.8rem', letterSpacing:'0.06em'}}>
-            🏛️ Retirados ({state.retiredRoster.length})
+            🏛️ Retirados ({promo.retiredRoster.length})
           </h5>
           <div className="d-flex flex-wrap gap-2">
-            {state.retiredRoster.map(w => (
+            {promo.retiredRoster.map(w => (
               <span key={w.id} className="badge bg-secondary fw-normal px-3 py-2" style={{fontSize:'0.8rem'}}>
                 {w.name} (ret. {w.retiredAt})
               </span>

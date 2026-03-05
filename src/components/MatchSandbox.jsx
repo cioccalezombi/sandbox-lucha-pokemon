@@ -1,17 +1,11 @@
 import React from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion, useActivePromotionConfig } from '../context/GameContext';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-const BELT_LABELS = {
-  world:     'IWGP World Heavyweight',
-  secondary: 'IWGP Intercontinental',
-  junior:    'IWGP World Jr. Heavy',
-  tag:       'World Tag Team',
-};
 
 /**
  * Historial de Combates — solo luchas por el título y finales de torneo.
@@ -19,7 +13,12 @@ const BELT_LABELS = {
  */
 const MatchSandbox = () => {
   const { state } = useGame();
-  const { matchLog } = state;
+  const promo = useActivePromotion();
+  const promoConfig = useActivePromotionConfig();
+  const matchLog = promo.matchLog || [];
+
+  // Belt labels come from the active promotion config
+  const beltLabels = promoConfig?.titles ?? {};
 
   const importantLog = matchLog.filter(r => r.isTitleMatch || r.isTournamentFinal || r.isWON);
 
@@ -42,7 +41,7 @@ const MatchSandbox = () => {
         </div>
       ) : (
         importantLog.map((r, i) => {
-          const beltLabel = r.belt ? (BELT_LABELS[r.belt] ?? r.belt) : null;
+          const beltLabel = r.belt ? (beltLabels[r.belt] ?? r.title ?? r.belt) : null;
           const isTitle = r.isTitleMatch;
           const isWON = r.isWON;
 
@@ -54,8 +53,8 @@ const MatchSandbox = () => {
           } else if (isTitle) {
             section = `Campeonato ${beltLabel ?? ''}`;
             headline = r.loserName
-              ? `${r.winnerName || r.winnerId} supera a ${r.loserName} por el Título ${beltLabel}`
-              : `${r.winnerName || r.winnerId} retiene el Título`;
+              ? `${r.winnerName || r.winnerId} supera a ${r.loserName} por el T\u00edtulo ${beltLabel}`
+              : `${r.winnerName || r.winnerId} retiene el T\u00edtulo`;
             borderColor = 'var(--ink)';
           } else {
             section = 'Final de Torneo';

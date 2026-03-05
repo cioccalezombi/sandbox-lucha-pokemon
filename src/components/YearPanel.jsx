@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame, SPECIAL_MONTHS } from '../context/GameContext';
+import { useGame, useActivePromotion, useActivePromotionConfig } from '../context/GameContext';
 import { Link } from 'react-router-dom';
 
 const BELT_LABELS = {
@@ -20,13 +20,19 @@ const MONTH_NAMES = [
  */
 const YearPanel = () => {
   const { state } = useGame();
-  const isTournamentMonth = !!SPECIAL_MONTHS[state.currentMonth];
-  const tourConfig = SPECIAL_MONTHS[state.currentMonth];
+  const promo = useActivePromotion();
+  const promoConfig = useActivePromotionConfig();
+  const specialMonths = promoConfig?.specialMonths ?? {};
+  const isTournamentMonth = !!specialMonths[state.currentMonth];
+  const tourConfig = specialMonths[state.currentMonth];
 
   // Last title match in the current month
-  const recentTitleWin = [...(state.matchLog || [])]
+  const recentTitleWin = [...(promo.matchLog || [])]
     .reverse()
     .find(r => r.isTitleMatch && r.month === state.currentMonth && r.year === state.currentYear);
+
+  // Belt labels from promotion config
+  const beltLabels = promoConfig?.titles ?? {};
 
   if (!isTournamentMonth && !recentTitleWin) return null;
 
@@ -98,8 +104,8 @@ const YearPanel = () => {
             margin: '0 0 8px',
           }}>
             {recentTitleWin.loserName
-              ? `${recentTitleWin.winnerName} vence a ${recentTitleWin.loserName} por el Título ${BELT_LABELS[recentTitleWin.belt] ?? ''}`
-              : `${recentTitleWin.winnerName} retiene el Título ${BELT_LABELS[recentTitleWin.belt] ?? ''}`}
+              ? `${recentTitleWin.winnerName} vence a ${recentTitleWin.loserName} por el T\u00edtulo ${beltLabels[recentTitleWin.belt] ?? recentTitleWin.belt ?? ''}`
+              : `${recentTitleWin.winnerName} retiene el T\u00edtulo ${beltLabels[recentTitleWin.belt] ?? recentTitleWin.belt ?? ''}`}
           </h1>
           <p style={{
             fontFamily: 'var(--serif)',

@@ -1,27 +1,24 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useGame, SPECIAL_MONTHS } from '../context/GameContext';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useGame, getActivePromotions } from '../context/GameContext';
+import { getPromoShortName, getPromoName } from '../data/promotions';
 import ConfirmModal from './ConfirmModal';
-import { calculateAge } from '../models/Wrestler';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-const NAV_LINKS = [
-  { to: '/',        label: 'Dashboard' },
-  { to: '/roster',  label: 'Roster'    },
-  { to: '/shows',   label: 'Shows'     },
-  { to: '/sandbox', label: 'Historial' },
-];
-
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state, dispatch } = useGame();
   const [confirm, setConfirm] = React.useState(null);
   const openConfirm = (opts) => setConfirm(opts);
   const closeConfirm = () => setConfirm(null);
+
+  const activePromotions = getActivePromotions(state.currentYear);
+  const hasPromo = !!state.activePromotionId;
 
   const handleAdvanceMonth = () => {
     if (state.currentMonth >= 12) return;
@@ -42,6 +39,14 @@ const Navbar = () => {
       confirmVariant: 'btn-dark',
       onConfirm: () => { dispatch({ type: 'ADVANCE_YEAR' }); closeConfirm(); },
     });
+  };
+
+  const handleSelectPromotion = (id) => {
+    dispatch({ type: 'SET_ACTIVE_PROMOTION', payload: { promotionId: id } });
+    // If deselecting (going to global), redirect to portada
+    if (id === state.activePromotionId) {
+      navigate('/');
+    }
   };
 
   return (
@@ -70,7 +75,9 @@ const Navbar = () => {
           </div>
 
           {/* Center: title */}
-          <Link to="/" className="wo-title">Wrestling Observer</Link>
+          <Link to="/" className="wo-title" onClick={() => dispatch({ type: 'SET_ACTIVE_PROMOTION', payload: { promotionId: null } })}>
+            Wrestling Observer
+          </Link>
 
           {/* Right: clickable date */}
           <div className="wo-date">
@@ -95,16 +102,60 @@ const Navbar = () => {
 
         <div className="wo-bottom-rule" />
 
+        {/* Nav + promo tabs combined */}
         <nav className="wo-nav container">
-          {NAV_LINKS.map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`wo-nav-link ${location.pathname === to ? 'wo-nav-active' : ''}`}
-            >
-              {label}
-            </Link>
-          ))}
+          {/* Portada — siempre visible, lleva a la portada global */}
+          <Link
+            to="/"
+            className={`wo-nav-link ${location.pathname === '/' && !hasPromo ? 'wo-nav-active' : ''}`}
+            onClick={() => dispatch({ type: 'SET_ACTIVE_PROMOTION', payload: { promotionId: null } })}
+          >
+            Portada
+          </Link>
+
+          {/* Separador visual */}
+          <div className="wo-nav-sep" />
+
+          {/* Promo tabs en la misma fila */}
+          {activePromotions.map(promo => {
+            const tabName = getPromoShortName(promo, state.currentYear, state.currentMonth);
+            const fullName = getPromoName(promo, state.currentYear, state.currentMonth);
+            return (
+              <button
+                key={promo.id}
+                className={`wo-nav-link wo-promo-inline ${state.activePromotionId === promo.id ? 'wo-nav-active' : ''}`}
+                onClick={() => handleSelectPromotion(promo.id)}
+                title={state.activePromotionId === promo.id ? `Deseleccionar ${tabName}` : `Ver ${fullName}`}
+              >
+                {tabName}
+              </button>
+            );
+          })}
+
+          {/* Links contextuales — solo cuando hay promo activa */}
+          {hasPromo && (
+            <>
+              <div className="wo-nav-sep" />
+              <Link
+                to="/roster"
+                className={`wo-nav-link ${location.pathname === '/roster' ? 'wo-nav-active' : ''}`}
+              >
+                Roster
+              </Link>
+              <Link
+                to="/shows"
+                className={`wo-nav-link ${location.pathname === '/shows' ? 'wo-nav-active' : ''}`}
+              >
+                Shows
+              </Link>
+              <Link
+                to="/sandbox"
+                className={`wo-nav-link ${location.pathname === '/sandbox' ? 'wo-nav-active' : ''}`}
+              >
+                Historial
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="wo-nav-rule" />

@@ -1,70 +1,74 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { getRosterForYear, roster1980 } from '../data/njpw/index';
+import { getRosterForYear as getNJPWRoster, roster1980 as njpwRoster1980 } from '../data/njpw/index';
+import { getRosterForYear as getAJPWRoster, roster1980 as ajpwRoster1980 } from '../data/ajpw/index';
+import { getRosterForYear as getWWFRoster, roster1980 as wwfRoster1980 } from '../data/wwf/index';
+import { PROMOTIONS, getActivePromotions, getPromotion, US_CITIES, getSeriesForYearMonth, getTitleName } from '../data/promotions';
+import { getRosterForYear as getJCPRoster, roster1980 as jcpRoster1980 } from '../data/jcp/index';
 import { calculateAge, getAgeModifier, getEffectiveLevel } from '../models/Wrestler';
 import { generateEliminationTournament, generateRoundRobinTournament, generateTagRoundRobin } from '../models/TournamentModel';
 
-// ─── Series de eventos NJPW ────────────────────────────────────────────────
-export const NJPW_SERIES = [
-  { weeklyPrefix: 'NJPW Road To King Of Pro-Wrestling', grandeLabel: 'King Of Pro-Wrestling' },
-  { weeklyPrefix: 'NJPW Road To Destruction',           grandeLabel: 'Destruction' },
-  { weeklyPrefix: 'NJPW Road To Wrestling Dontaku',     grandeLabel: 'Wrestling Dontaku' },
-  { weeklyPrefix: 'NJPW Road To Sakura Genesis',        grandeLabel: 'Sakura Genesis' },
-  { weeklyPrefix: 'NJPW Road To The New Beginning',     grandeLabel: 'The New Beginning' },
-  { weeklyPrefix: 'NJPW Road To Power Struggle',        grandeLabel: 'Power Struggle' },
-  { weeklyPrefix: 'NJPW Road To Dominion',              grandeLabel: 'Dominion' },
-  { weeklyPrefix: 'New Japan Brave',                    grandeLabel: 'New Japan Brave Tag 8' },
-  { weeklyPrefix: 'New Japan ISM',                      grandeLabel: 'New Japan ISM Tag 8' },
-  { weeklyPrefix: 'NJPW Battle Final',                  grandeLabel: 'NJPW Battle Final Tag 8' },
-  { weeklyPrefix: 'NJPW Toukon Series',                 grandeLabel: 'NJPW Toukon Series Tag 8' },
-  { weeklyPrefix: 'NJPW Golden Fight Series',           grandeLabel: 'NJPW Golden Fight Series Tag 8' },
-  { weeklyPrefix: 'NJPW Big Fight Series',              grandeLabel: 'NJPW Big Fight Series Tag 8' },
-  { weeklyPrefix: 'NJPW Strong Energy',                 grandeLabel: 'NJPW Strong Energy Tag 8' },
-  { weeklyPrefix: 'Exciting Battle In Naeba',           grandeLabel: 'Exciting Battle In Naeba Tag 8' },
-  { weeklyPrefix: 'NJPW Hyper Battle',                  grandeLabel: 'NJPW Hyper Battle Tag 8' },
-  { weeklyPrefix: 'NJPW Fighting Spirit',               grandeLabel: 'NJPW Fighting Spirit Tag 8' },
-];
+// ─── Re-export for consumers who imported from here ─────────────────────────
+export { PROMOTIONS, getActivePromotions, getPromotion };
 
-// ─── Constantes ────────────────────────────────────────────────────────────
-export const SPECIAL_MONTHS = {
-  3:  { key: 'njc',  name: 'New Japan Cup',             type: 'elimination', icon: '🏆', participants: 32, weightClass: null },
-  6:  { key: 'bosj', name: 'Best of the Super Juniors', type: 'roundrobin',  icon: '✈️', participants: 8,  weightClass: 'junior' },
-  9:  { key: 'g1',   name: 'G1 Climax',                 type: 'roundrobin',  icon: '🌟', participants: 10, weightClass: null },
-  12: { key: 'wtl',  name: 'World Tag League',           type: 'tagRoundRobin',icon: '🤝', participants: 8,  weightClass: 'heavy' },
+// Keep back-compat exports for legacy imports (e.g. Navbar)
+export const NJPW_SERIES = PROMOTIONS.find(p => p.id === 'njpw').series;
+export const SPECIAL_MONTHS = PROMOTIONS.find(p => p.id === 'njpw').specialMonths;
+
+// ─── Roster loaders per promotion ────────────────────────────────────────────
+const ROSTER_LOADERS = {
+  njpw: { getForYear: getNJPWRoster, base: njpwRoster1980 },
+  ajpw: { getForYear: getAJPWRoster, base: ajpwRoster1980 },
+  wwf:  { getForYear: getWWFRoster,  base: wwfRoster1980  },
+  jcp:  { getForYear: getJCPRoster,  base: jcpRoster1980  },
 };
 
-// ─── Estado inicial ──────────────────────────────────────────────────────────
+// ─── Estado inicial de una sola promoción ────────────────────────────────────
+const makePromoState = (promotionId) => {
+  const loader = ROSTER_LOADERS[promotionId];
+  const base = loader ? loader.base.map(w => ({ ...w, points: 0, monthlyPoints: 0 })) : [];
+  return {
+    roster: base,
+    retiredRoster: [],
+    champions: { world: null, secondary: null, junior: null, tag: null },
+    monthlyWorkers: [],
+    monthlyShows: [],
+    currentShowIndex: 0,
+    activeTournament: null,
+    eventLog: [],
+    matchLog: [],
+    yearHistory: [],
+    monthlyEventSeries: null,
+    recentEvent: null,
+    pendingMonthEvents: [],
+    workerSelectionActive: false,
+    workerSelectionPool: [],
+    workerSelectionOptions: [],
+    workerSelectionAvailable: [],
+    workerSelectionCpuLastPick: null,
+    g1DraftActive: false,
+    g1DraftSelected: [],
+    g1DraftOptions: [],
+    g1DraftAvailable: [],
+    g1DraftTarget: 10,
+  };
+};
+
+// ─── Estado global inicial ────────────────────────────────────────────────────
 const INITIAL_STATE = {
   currentYear: 1980,
   currentMonth: 1,
   phase: 'booking',
-  roster: roster1980.map(w => ({ ...w, points: 0, monthlyPoints: 0 })),
-  retiredRoster: [],
-  champions: { world: null, secondary: null, junior: null, tag: null },
-  monthlyWorkers: [],
-  monthlyShows: [],
-  currentShowIndex: 0,
-  activeTournament: null,
-  eventLog: [],
-  matchLog: [],
-  yearHistory: [],
-  monthlyEventSeries: null,
-  recentEvent: null,
-  pendingMonthEvents: [],        // ← mostrado en el modal de periódico
-  // Selección interactiva de workers
-  workerSelectionActive: false,
-  workerSelectionPool: [],
-  workerSelectionOptions: [],
-  workerSelectionAvailable: [],
-  workerSelectionCpuLastPick: null,
-  // Draft interactivo del G1 Climax
-  g1DraftActive: false,
-  g1DraftSelected: [],
-  g1DraftOptions: [],
-  g1DraftAvailable: [],
-  g1DraftTarget: 10,
+  activePromotionId: null,   // null = vista global (portada)
+  globalNewsFeed: [],        // noticias persistentes de todas las promociones
+  promotions: {
+    njpw: makePromoState('njpw'),
+    ajpw: makePromoState('ajpw'),
+    wwf:  makePromoState('wwf'),
+    jcp:  makePromoState('jcp'),
+  },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const pickRandom = (arr, n) => {
@@ -99,16 +103,6 @@ const INJURY_LEVE = [
   (n,x)=>`${n} sufrió una contusión en las costillas y estará fuera ${m(x)}.`,
   (n,x)=>`${n} se lastimó la muñeca y estará fuera ${m(x)}.`,
   (n,x)=>`${n} sufrió una distensión en el gemelo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} se torció la rodilla en un mal movimiento y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió un fuerte golpe en la cadera y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} se lastimó el hombro al caer del ring y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una sobrecarga muscular en la espalda y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} se torció la muñeca durante un combate y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió un tirón en el cuádriceps y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} se lesionó el tobillo al aterrizar mal y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una distensión en el hombro y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} se golpeó la espalda baja y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una pequeña lesión en el codo y estará fuera ${m(x)}.`,
 ];
 
 const INJURY_MODERADA = [
@@ -122,16 +116,6 @@ const INJURY_MODERADA = [
   (n,x)=>`${n} sufrió un desgarro muscular en el cuádriceps y estará fuera ${m(x)}.`,
   (n,x)=>`${n} sufrió una lesión en el cuello tras un mal aterrizaje y estará fuera ${m(x)}.`,
   (n,x)=>`${n} sufrió una fractura menor en la mano y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión en el codo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión en la cadera y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una distensión en los ligamentos de la rodilla y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió un desgarro en el bíceps y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión en el hombro que requerirá reposo prolongado y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una fractura menor en el pie y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión muscular en la espalda baja y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió un esguince severo de tobillo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión en el pectoral y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión en la rodilla tras un impacto fuerte y estará fuera ${m(x)}.`,
 ];
 
 const INJURY_GRAVE = [
@@ -145,39 +129,13 @@ const INJURY_GRAVE = [
   (n,x)=>`${n} sufrió una fractura en varias costillas y estará fuera ${m(x)}.`,
   (n,x)=>`${n} sufrió una rotura de ligamentos cruzados y estará fuera ${m(x)}.`,
   (n,x)=>`${n} sufrió una lesión grave en la cadera y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una rotura de pectoral y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión grave en la rodilla durante un combate y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una fractura de tobillo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión grave en la columna y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una rotura muscular completa en el muslo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una fractura de clavícula y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión grave en el hombro y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una rotura de ligamentos múltiples en la rodilla y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una fractura de codo y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} sufrió una lesión grave en la espalda baja y estará fuera ${m(x)}.`,
 ];
 
 const INJURY_GRAVISIMA = [
   (n,x)=>`${n} sufrió graves lesiones tras un accidente automovilístico y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
   (n,x)=>`${n} sufrió múltiples fracturas en un choque de moto y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} recibió un disparo durante un ataque relacionado con la yakuza y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
   (n,x)=>`${n} sufrió graves lesiones tras ser apuñalado en una pelea callejera y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
   (n,x)=>`${n} sufrió daños severos tras ser atropellado por un automóvil y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió múltiples fracturas tras caer desde gran altura y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves quemaduras en un incendio doméstico y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió una lesión cerebral grave tras un accidente fuera del ring y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves lesiones tras ser atacado violentamente en la calle y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió múltiples fracturas tras un accidente en bicicleta y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves lesiones tras un accidente con maquinaria pesada y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió una grave lesión en la columna tras un accidente doméstico y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió múltiples fracturas tras un accidente durante un entrenamiento extremo y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves lesiones tras ser alcanzado por disparos durante un altercado y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió una grave lesión neurológica tras un accidente en la vía pública y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió múltiples fracturas tras un accidente de tránsito durante una gira y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves lesiones tras un violento asalto y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió una grave lesión en la columna tras un accidente en el gimnasio y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió múltiples fracturas tras ser atropellado en la vía pública y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
-  (n,x)=>`${n} sufrió graves lesiones internas tras un accidente automovilístico durante una gira y estará fuera ${m(x)}. Nunca volverá a ser el mismo.`,
 ];
 
 const SUSPENSION_TEMPLATES = [
@@ -191,16 +149,6 @@ const SUSPENSION_TEMPLATES = [
   (n,x)=>`${n} fue suspendido por comportamiento inapropiado durante un evento y estará fuera ${m(x)}.`,
   (n,x)=>`${n} fue suspendido tras causar disturbios en backstage y estará fuera ${m(x)}.`,
   (n,x)=>`${n} fue suspendido por ignorar instrucciones oficiales y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido tras un altercado con personal de producción y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido por ausentarse sin aviso de un show y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido tras un incidente con un fan y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido por violar las normas internas de la promoción y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido por llegar en malas condiciones a un evento y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido tras generar problemas en una gira y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido por conducta poco profesional y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido tras una discusión con directivos y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido por comportamiento irresponsable y estará fuera ${m(x)}.`,
-  (n,x)=>`${n} fue suspendido tras un incidente disciplinario y estará fuera ${m(x)}.`,
 ];
 
 const CAREER_END_TEMPLATES = [
@@ -210,21 +158,17 @@ const CAREER_END_TEMPLATES = [
   (n)=>`${n} fue arrestado tras un violento incidente armado en un bar. Su carrera ha terminado.`,
   (n)=>`${n} fue condenado por participar en actividades del crimen organizado. Su carrera ha terminado.`,
   (n)=>`${n} fue arrestado por intento de asesinato tras una pelea fuera del ring. Su carrera ha terminado.`,
-  (n)=>`${n} fue condenado por un violento asalto que dejó a una persona gravemente herida. Su carrera ha terminado.`,
-  (n)=>`${n} fue arrestado por tráfico de drogas a gran escala. Su carrera ha terminado.`,
-  (n)=>`${n} fue condenado por secuestro en un caso que conmocionó a la opinión pública. Su carrera ha terminado.`,
-  (n)=>`${n} fue arrestado tras verse involucrado en un asesinato durante una disputa personal. Su carrera ha terminado.`,
 ];
 
 const pick = (arr) => arr[randomInt(0, arr.length - 1)];
 
+// ─── Procesador de eventos (aplica a un estado de promoción) ─────────────────
 const processEvents = (currentRoster, currentChampions, eventLog, nextMonth, nextYear) => {
   let newRoster = [...currentRoster];
   let newEvents = [];
   let newChampions = { ...currentChampions };
   let careerEnded = [];
 
-  // 1. Procesar retornos automáticos
   newRoster = newRoster.map(w => {
     if (w.status !== 'active' && w.returnMonth === nextMonth && w.returnYear === nextYear) {
       newEvents.push({ id: Date.now()+Math.random(), text: `${w.name} regresó a la acción tras su ausencia.`, type: 'success', eventType: 'return', year: nextYear, month: nextMonth });
@@ -233,7 +177,6 @@ const processEvents = (currentRoster, currentChampions, eventLog, nextMonth, nex
     return w;
   });
 
-  // Helper: vacunar cinturón
   const vacateChampion = (victim) => {
     Object.keys(newChampions).forEach(belt => {
       if (newChampions[belt]?.id === victim.id) {
@@ -243,7 +186,6 @@ const processEvents = (currentRoster, currentChampions, eventLog, nextMonth, nex
     });
   };
 
-  // Helper: establecer lesionado
   const setInjured = (wrestler, duration, extraFields = {}) => {
     let rMonth = nextMonth + duration, rYear = nextYear;
     while (rMonth > 12) { rMonth -= 12; rYear += 1; }
@@ -252,51 +194,39 @@ const processEvents = (currentRoster, currentChampions, eventLog, nextMonth, nex
       : w);
   };
 
-  // 2. Evento aleatorio (20% por mes)
   const activeWrestlers = newRoster.filter(w => w.status === 'active');
   if (Math.random() < 0.20 && activeWrestlers.length > 0) {
     const victim = pick(activeWrestlers);
     const roll = Math.random();
 
     if (roll < 0.30) {
-      // Lesión leve: 1-3 meses — sin vacante
       const dur = randomInt(1, 3);
       newEvents.push({ id: Date.now()+Math.random(), text: pick(INJURY_LEVE)(victim.name, dur), type: 'warning', eventType: 'leve', year: nextYear, month: nextMonth });
       setInjured(victim, dur);
-
     } else if (roll < 0.55) {
-      // Lesión moderada: 2-5 meses — vacante si ≥3
       const dur = randomInt(2, 5);
       newEvents.push({ id: Date.now()+Math.random(), text: pick(INJURY_MODERADA)(victim.name, dur), type: 'warning', eventType: 'moderada', year: nextYear, month: nextMonth });
       setInjured(victim, dur);
       if (dur >= 3) vacateChampion(victim);
-
     } else if (roll < 0.73) {
-      // Lesión grave: 4-8 meses — siempre vacante
       const dur = randomInt(4, 8);
       newEvents.push({ id: Date.now()+Math.random(), text: pick(INJURY_GRAVE)(victim.name, dur), type: 'danger', eventType: 'grave', year: nextYear, month: nextMonth });
       setInjured(victim, dur);
       vacateChampion(victim);
-
     } else if (roll < 0.80) {
-      // Lesión gravísima: 6-12 meses + penalidad permanente -15%
       const dur = randomInt(6, 12);
       newEvents.push({ id: Date.now()+Math.random(), text: pick(INJURY_GRAVISIMA)(victim.name, dur), type: 'danger', eventType: 'gravisima', year: nextYear, month: nextMonth });
       const existingPenalty = victim.permanentPenalty ?? 1.0;
       setInjured(victim, dur, { permanentPenalty: Math.round(existingPenalty * 0.85 * 100) / 100 });
       vacateChampion(victim);
-
     } else if (roll < 0.95) {
-      // Suspensión: 1-4 meses — vacante si ≥3
       const dur = randomInt(1, 4);
       newEvents.push({ id: Date.now()+Math.random(), text: pick(SUSPENSION_TEMPLATES)(victim.name, dur), type: 'warning', eventType: 'suspension', year: nextYear, month: nextMonth });
       let rMonth = nextMonth + dur, rYear = nextYear;
       while (rMonth > 12) { rMonth -= 12; rYear += 1; }
       newRoster = newRoster.map(w => w.id === victim.id ? { ...w, status: 'suspended', returnMonth: rMonth, returnYear: rYear } : w);
       if (dur >= 3) vacateChampion(victim);
-
     } else {
-      // Evento gravísimo fuera del ring — fin de carrera inmediato
       newEvents.push({ id: Date.now()+Math.random(), text: pick(CAREER_END_TEMPLATES)(victim.name), type: 'danger', eventType: 'careerEnd', year: nextYear, month: nextMonth });
       careerEnded.push({ ...victim, retiredAt: nextYear });
       newRoster = newRoster.filter(w => w.id !== victim.id);
@@ -308,9 +238,7 @@ const processEvents = (currentRoster, currentChampions, eventLog, nextMonth, nex
   return { newRoster, careerEnded, newChampions, newLog: allEvents, newEvents };
 };
 
-
-
-/** Genera 7 shows semanales con nombres de la serie */
+// ─── Show generation ─────────────────────────────────────────────────────────
 const generateShows = (workers, series) => {
   const shuffled = [...workers].sort(() => Math.random() - 0.5);
   const shows = [];
@@ -327,28 +255,24 @@ const generateShows = (workers, series) => {
       const wA = next(), wB = next();
       matches.push({ id: `show${i}_single${s}`, type: 'singles', wrestlerA: wA, wrestlerB: wB, winnerId: null });
     }
-    const label = series ? `${series.weeklyPrefix} Tag ${i + 1}` : `Show ${i + 1}`;
+    const pickCity = () => US_CITIES[Math.floor(Math.random() * US_CITIES.length)];
+    const label = series?.locationBased
+      ? `${series.weeklyPrefix} in ${pickCity()}`
+      : series ? `${series.weeklyPrefix} Tag ${i + 1}` : `Show ${i + 1}`;
     shows.push({ index: i, label, matches });
   }
   return shows;
 };
 
-/** Genera el Show Grande basado en ranking mensual.
- * Los retadores se seleccionan secuencialmente para evitar duplicados:
- * - Título Mundial: campeón vs #1 (o #1 vs #2 si vacante)
- * - Título Secundario: campeón vs primer retador disponible (o los dos siguientes si vacante)
- * - Semi-estelar + Tag: con los restantes
- */
-const generateShowGrande = (roster, champions, series) => {
+const generateShowGrande = (roster, champions, series, promotionId, year, month) => {
+  const promo = getPromotion(promotionId);
   const ranking = [...roster]
     .filter(w => w.status === 'active')
     .sort((a, b) => (b.monthlyPoints || 0) - (a.monthlyPoints || 0));
 
-  // Solo excluir campeones de los contendientes; ellos participan en sus propias defensas
   const champIds = Object.values(champions).filter(Boolean).map(c => c.id);
   const challengers = ranking.filter(w => !champIds.includes(w.id));
 
-  // Pool de retadores con cursor para evitar duplicados
   const usedIds = new Set();
   const nextChallenger = () => {
     const c = challengers.find(w => !usedIds.has(w.id));
@@ -356,27 +280,28 @@ const generateShowGrande = (roster, champions, series) => {
     return c ?? null;
   };
 
-  // ── Título Mundial ──────────────────────────────────────────────────────────
+  // Use getTitleName so belts update when JCP→WCW or WWF→WWE renames happen
+  const worldTitle     = getTitleName(promo, 'world',     year ?? 2000, month ?? 1);
+  const secondaryTitle = getTitleName(promo, 'secondary', year ?? 2000, month ?? 1);
+
   let worldMatch = null;
   if (champions.world) {
     const c1 = nextChallenger();
-    if (c1) worldMatch = { id: 'sg_world', type: 'title', belt: 'world', title: 'IWGP World Heavyweight', wrestlerA: champions.world, wrestlerB: c1, winnerId: null };
+    if (c1) worldMatch = { id: 'sg_world', type: 'title', belt: 'world', title: worldTitle, wrestlerA: champions.world, wrestlerB: c1, winnerId: null };
   } else {
     const c1 = nextChallenger(), c2 = nextChallenger();
-    if (c1 && c2) worldMatch = { id: 'sg_world', type: 'title', belt: 'world', title: 'IWGP World Heavyweight (Vacante)', wrestlerA: c1, wrestlerB: c2, winnerId: null };
+    if (c1 && c2) worldMatch = { id: 'sg_world', type: 'title', belt: 'world', title: `${worldTitle} (Vacante)`, wrestlerA: c1, wrestlerB: c2, winnerId: null };
   }
 
-  // ── Título Secundario (usa retadores distintos a los del mundial) ───────────
   let secondaryMatch = null;
   if (champions.secondary) {
     const c1 = nextChallenger();
-    if (c1) secondaryMatch = { id: 'sg_secondary', type: 'title', belt: 'secondary', title: 'IWGP Intercontinental', wrestlerA: champions.secondary, wrestlerB: c1, winnerId: null };
+    if (c1) secondaryMatch = { id: 'sg_secondary', type: 'title', belt: 'secondary', title: secondaryTitle, wrestlerA: champions.secondary, wrestlerB: c1, winnerId: null };
   } else {
     const c1 = nextChallenger(), c2 = nextChallenger();
-    if (c1 && c2) secondaryMatch = { id: 'sg_secondary', type: 'title', belt: 'secondary', title: 'IWGP Intercontinental (Vacante)', wrestlerA: c1, wrestlerB: c2, winnerId: null };
+    if (c1 && c2) secondaryMatch = { id: 'sg_secondary', type: 'title', belt: 'secondary', title: `${secondaryTitle} (Vacante)`, wrestlerA: c1, wrestlerB: c2, winnerId: null };
   }
 
-  // ── Semi-estelar y Tag con los restantes ────────────────────────────────────
   const s1 = nextChallenger(), s2 = nextChallenger();
   const semiMain = (s1 && s2)
     ? { id: 'sg_semimain', type: 'singles', title: 'Semi-Estelar', wrestlerA: s1, wrestlerB: s2, winnerId: null }
@@ -396,35 +321,63 @@ const generateShowGrande = (roster, champions, series) => {
   };
 };
 
-// ─── Reducer ──────────────────────────────────────────────────────────────────
-function gameReducer(state, action) {
-  switch (action.type) {
+// ─── Helper para mutar el estado de una promoción dentro del state global ─────
+// Retorna un nuevo state con la promoción `id` actualizada con `newPromoState`.
+const withPromo = (state, id, newPromoState) => ({
+  ...state,
+  promotions: {
+    ...state.promotions,
+    [id]: newPromoState,
+  },
+});
 
+// Shortcut: get current active promo state
+const activePromo = (state) => state.promotions[state.activePromotionId];
+
+// ─── Reducer ─────────────────────────────────────────────────────────────────
+function gameReducer(state, action) {
+  // Actions that affect a specific promotion use action.promotionId (defaults to active)
+  const pid = action.promotionId ?? state.activePromotionId;
+  const promo = state.promotions[pid];
+
+  switch (action.type) {
     case 'LOAD_STATE':
       return { ...action.payload };
 
-    case 'LOG_RESULT': {
-      const { winnerId, loserId, matchType, month, year } = action.payload;
-      const newLog = [{ id: Date.now(), year: year ?? state.currentYear, month: month ?? state.currentMonth, winnerId, loserId, matchType: matchType ?? 'singles', time: new Date().toLocaleTimeString() }, ...state.matchLog];
-      const newRoster = state.roster.map(w =>
-        w.id === winnerId ? { ...w, points: (w.points || 0) + 1, monthlyPoints: (w.monthlyPoints || 0) + 1 } : w
-      );
-      return { ...state, matchLog: newLog, roster: newRoster };
+    case 'SET_ACTIVE_PROMOTION': {
+      const { promotionId } = action.payload;
+      // Toggle: si ya es la activa, deselecciona (null = vista global)
+      if (promotionId === state.activePromotionId) {
+        return { ...state, activePromotionId: null };
+      }
+      // null explícito = forzar vista global
+      if (promotionId === null) {
+        return { ...state, activePromotionId: null };
+      }
+      if (!state.promotions[promotionId]) return state;
+      return { ...state, activePromotionId: promotionId };
     }
 
-    // ─── Selección interactiva de workers ───────────────────────────────────
+    case 'LOG_RESULT': {
+      const { winnerId, loserId, matchType, month, year } = action.payload;
+      const newLog = [{ id: Date.now(), year: year ?? state.currentYear, month: month ?? state.currentMonth, winnerId, loserId, matchType: matchType ?? 'singles', time: new Date().toLocaleTimeString() }, ...promo.matchLog];
+      const newRoster = promo.roster.map(w =>
+        w.id === winnerId ? { ...w, points: (w.points || 0) + 1, monthlyPoints: (w.monthlyPoints || 0) + 1 } : w
+      );
+      return withPromo(state, pid, { ...promo, matchLog: newLog, roster: newRoster });
+    }
+
     case 'START_WORKER_SELECTION':
     case 'SELECT_MONTHLY_WORKERS': {
-      // Excluir campeones mundial Y secundario — no participan en shows semanales
       const champExcludeIds = new Set(
-        ['world', 'secondary'].map(k => state.champions[k]?.id).filter(Boolean)
+        ['world', 'secondary'].map(k => promo.champions[k]?.id).filter(Boolean)
       );
-      const available = state.roster.filter(w => w.status === 'active' && !champExcludeIds.has(w.id));
+      const available = promo.roster.filter(w => w.status === 'active' && !champExcludeIds.has(w.id));
       const shuffled = [...available].sort(() => Math.random() - 0.5);
       const options = shuffled.slice(0, Math.min(2, shuffled.length));
       const remaining = shuffled.slice(options.length);
-      return {
-        ...state,
+      return withPromo(state, pid, {
+        ...promo,
         workerSelectionActive: true,
         workerSelectionPool: [],
         workerSelectionOptions: options,
@@ -434,26 +387,24 @@ function gameReducer(state, action) {
         monthlyShows: [],
         currentShowIndex: 0,
         monthlyEventSeries: null,
-      };
+      });
     }
 
     case 'CHOOSE_WORKER': {
       const { chosenId } = action.payload;
-      const chosen = state.workerSelectionOptions.find(w => w.id === chosenId);
-      const rejected = state.workerSelectionOptions.find(w => w.id !== chosenId);
+      const chosen = promo.workerSelectionOptions.find(w => w.id === chosenId);
+      const rejected = promo.workerSelectionOptions.find(w => w.id !== chosenId);
 
-      // El campeón nunca debe volver al pool aunque sea 'rejected'
       const champExcludeIds = new Set(
-        ['world', 'secondary'].map(k => state.champions[k]?.id).filter(Boolean)
+        ['world', 'secondary'].map(k => promo.champions[k]?.id).filter(Boolean)
       );
 
-      let newAvailable = [...state.workerSelectionAvailable];
+      let newAvailable = [...promo.workerSelectionAvailable];
       if (rejected && !champExcludeIds.has(rejected.id)) {
         const insertAt = randomInt(0, newAvailable.length);
         newAvailable.splice(insertAt, 0, rejected);
       }
 
-      // CPU elige 1 al azar del pool disponible
       let cpuPick = null;
       if (newAvailable.length > 0) {
         const cpuIdx = randomInt(0, newAvailable.length - 1);
@@ -462,7 +413,7 @@ function gameReducer(state, action) {
       }
 
       const newPool = [
-        ...state.workerSelectionPool,
+        ...promo.workerSelectionPool,
         { ...chosen, pickedBy: 'player' },
         ...(cpuPick ? [{ ...cpuPick, pickedBy: 'cpu' }] : []),
       ];
@@ -472,11 +423,12 @@ function gameReducer(state, action) {
       if (newPool.length >= targetCount || newAvailable.length === 0) {
         const workers = newPool.slice(0, targetCount);
         const cleanWorkers = workers.map(({ pickedBy: _, ...w }) => w);
-        // Elegir serie aleatoria y generar shows automáticamente
-        const series = NJPW_SERIES[randomInt(0, NJPW_SERIES.length - 1)];
+        const promoConfig = getPromotion(pid);
+        const pool = getSeriesForYearMonth(promoConfig, state.currentYear, state.currentMonth);
+        const series = pool[randomInt(0, pool.length - 1)];
         const shows = generateShows(cleanWorkers, series);
-        return {
-          ...state,
+        return withPromo(state, pid, {
+          ...promo,
           workerSelectionActive: false,
           workerSelectionPool: [],
           workerSelectionOptions: [],
@@ -486,73 +438,72 @@ function gameReducer(state, action) {
           monthlyEventSeries: series,
           monthlyShows: shows,
           currentShowIndex: 0,
-        };
+        });
       }
 
       const nextOptions = newAvailable.slice(0, Math.min(2, newAvailable.length));
       const nextAvailable = newAvailable.slice(nextOptions.length);
 
-      return {
-        ...state,
+      return withPromo(state, pid, {
+        ...promo,
         workerSelectionPool: newPool,
         workerSelectionOptions: nextOptions,
         workerSelectionAvailable: nextAvailable,
         workerSelectionCpuLastPick: cpuPick,
-      };
+      });
     }
 
     case 'CANCEL_WORKER_SELECTION': {
-      return {
-        ...state,
+      return withPromo(state, pid, {
+        ...promo,
         workerSelectionActive: false,
         workerSelectionPool: [],
         workerSelectionOptions: [],
         workerSelectionAvailable: [],
         workerSelectionCpuLastPick: null,
-      };
+      });
     }
 
     case 'GENERATE_SHOWS': {
-      if (state.monthlyWorkers.length < 4) return state;
-      const series = state.monthlyEventSeries;
-      const shows = generateShows(state.monthlyWorkers, series);
-      return { ...state, monthlyShows: shows, currentShowIndex: 0 };
+      if (promo.monthlyWorkers.length < 4) return state;
+      const series = promo.monthlyEventSeries;
+      const shows = generateShows(promo.monthlyWorkers, series);
+      return withPromo(state, pid, { ...promo, monthlyShows: shows, currentShowIndex: 0 });
     }
 
     case 'ADVANCE_SHOW': {
-      const nextIndex = state.currentShowIndex + 1;
-      // Al llegar al show grande (índice 7), generarlo dinámicamente con el ranking mensual actual
+      const nextIndex = promo.currentShowIndex + 1;
       if (nextIndex === 7) {
-        const sg = generateShowGrande(state.roster, state.champions, state.monthlyEventSeries);
-        return {
-          ...state,
+        const sg = generateShowGrande(promo.roster, promo.champions, promo.monthlyEventSeries, pid, state.currentYear, state.currentMonth);
+        return withPromo(state, pid, {
+          ...promo,
           currentShowIndex: 7,
-          monthlyShows: [...state.monthlyShows.filter(s => !s.isGrande), sg],
-        };
+          monthlyShows: [...promo.monthlyShows.filter(s => !s.isGrande), sg],
+        });
       }
-      return { ...state, currentShowIndex: nextIndex };
+      return withPromo(state, pid, { ...promo, currentShowIndex: nextIndex });
     }
 
     case 'GENERATE_SHOW_GRANDE': {
-      const sg = generateShowGrande(state.roster, state.champions, state.monthlyEventSeries);
-      return {
-        ...state,
-        monthlyShows: [...state.monthlyShows.filter(s => !s.isGrande), sg],
+      const sg = generateShowGrande(promo.roster, promo.champions, promo.monthlyEventSeries, pid, state.currentYear, state.currentMonth);
+
+      return withPromo(state, pid, {
+        ...promo,
+        monthlyShows: [...promo.monthlyShows.filter(s => !s.isGrande), sg],
         currentShowIndex: 7,
-      };
+      });
     }
 
     case 'SET_CURRENT_SHOW':
-      return { ...state, currentShowIndex: action.payload };
+      return withPromo(state, pid, { ...promo, currentShowIndex: action.payload });
 
     case 'RESOLVE_SHOW_MATCH': {
       const { showIndex, matchId, winnerId, winningSide } = action.payload;
 
-      // Buscar el match original para saber si es un match de título
-      const origShow = state.monthlyShows.find(s => s.index === showIndex);
+      const origShow = promo.monthlyShows.find(s => s.index === showIndex);
       const origMatch = origShow?.matches.find(m => m.id === matchId);
 
-      const updatedShows = state.monthlyShows.map(show => {
+      const updatedShows = promo.monthlyShows.map(show => {
         if (show.index !== showIndex) return show;
         return {
           ...show,
@@ -563,7 +514,7 @@ function gameReducer(state, action) {
         };
       });
 
-      let newRoster = [...state.roster];
+      let newRoster = [...promo.roster];
       if (winnerId) {
         newRoster = newRoster.map(w =>
           w.id === winnerId ? { ...w, points: (w.points || 0) + 1, monthlyPoints: (w.monthlyPoints || 0) + 1 } : w
@@ -582,13 +533,12 @@ function gameReducer(state, action) {
         }
       }
 
-      // Auto-asignar campeón si el match tiene un belt (título en juego)
-      let newChampions = { ...state.champions };
-      let recentEvent = state.recentEvent;
+      let newChampions = { ...promo.champions };
+      let recentEvent = promo.recentEvent;
       if (origMatch?.belt && winnerId) {
         const champWrestler = newRoster.find(w => w.id === winnerId);
         if (champWrestler) {
-          const wasChamp = state.champions[origMatch.belt];
+          const wasChamp = promo.champions[origMatch.belt];
           newChampions[origMatch.belt] = champWrestler;
           recentEvent = wasChamp && wasChamp.id === champWrestler.id
             ? { type: 'title', message: ` ${champWrestler.name} defiende exitosamente su título.` }
@@ -596,7 +546,6 @@ function gameReducer(state, action) {
         }
       }
 
-      // Construir entrada del log enriquecida
       const getWinnerName = () => {
         if (winnerId) return newRoster.find(w => w.id === winnerId)?.name ?? 'Desconocido';
         if (winningSide && origMatch) {
@@ -606,8 +555,6 @@ function gameReducer(state, action) {
         return 'Desconocido';
       };
       const getLoserName = () => {
-        // Comprobar por wrestlerA/B en lugar de type==='singles'  
-        // porque los title matches tienen type='title', no 'singles'
         if (winnerId && origMatch?.wrestlerA && origMatch?.wrestlerB) {
           const loser = origMatch.wrestlerA?.id === winnerId ? origMatch.wrestlerB : origMatch.wrestlerA;
           return loser?.name ?? '';
@@ -633,104 +580,126 @@ function gameReducer(state, action) {
         time: new Date().toLocaleTimeString(),
       };
 
-      return {
-        ...state,
+      // Push title match results to the global news feed
+      let newGlobalFeed = state.globalNewsFeed || [];
+      if (origMatch?.belt) {
+        const promoConfig = getPromotion(pid);
+        const promoShortName = promoConfig?.shortName ?? pid.toUpperCase();
+        const beltLabel = promoConfig?.titles?.[origMatch.belt] ?? origMatch.title ?? origMatch.belt;
+        const winnerN = logEntry.winnerName;
+        const loserN = logEntry.loserName;
+        const newsText = loserN
+          ? `${winnerN} vence a ${loserN} por el ${beltLabel}`
+          : `${winnerN} retiene el ${beltLabel}`;
+        const newsEntry = {
+          id: logEntry.id,
+          eventType: 'titleMatch',
+          text: newsText,
+          month: state.currentMonth,
+          year: state.currentYear,
+          promoId: pid,
+          promoShortName,
+        };
+        newGlobalFeed = [newsEntry, ...newGlobalFeed].slice(0, 200);
+      }
+
+      const stateWithPromo = withPromo(state, pid, {
+        ...promo,
         monthlyShows: updatedShows,
         roster: newRoster,
         champions: newChampions,
         recentEvent,
-        matchLog: [logEntry, ...state.matchLog],
-      };
+        matchLog: [logEntry, ...promo.matchLog],
+      });
+      return { ...stateWithPromo, globalNewsFeed: newGlobalFeed };
     }
+
 
     case 'GENERATE_TOURNAMENT': {
       const month = state.currentMonth;
-      const config = SPECIAL_MONTHS[month];
-      if (!config || state.activeTournament) return state;
+      const promoConfig = getPromotion(pid);
+      const config = promoConfig?.specialMonths?.[month];
+      if (!config || promo.activeTournament) return state;
 
-      // G1 Climax: iniciar draft interactivo en lugar de selección aleatoria
-      if (config.key === 'g1') {
-        const eligible = state.roster
+      if (config.key === 'g1' || config.key === 'cc') {
+        const eligible = promo.roster
           .filter(w => w.status === 'active')
           .sort(() => Math.random() - 0.5);
         const options = eligible.slice(0, 3);
         const available = eligible.slice(3);
-        return {
-          ...state,
+        return withPromo(state, pid, {
+          ...promo,
           g1DraftActive: true,
           g1DraftSelected: [],
           g1DraftOptions: options,
           g1DraftAvailable: available,
           g1DraftTarget: config.participants,
-        };
+        });
       }
 
       let tournament = null;
-      if (config.type === 'elimination') tournament = generateEliminationTournament(config, state.roster);
-      else if (config.type === 'roundrobin') tournament = generateRoundRobinTournament(config, state.roster);
-      else if (config.type === 'tagRoundRobin') tournament = generateTagRoundRobin(config, state.roster);
-      return { ...state, activeTournament: tournament };
+      if (config.type === 'elimination') tournament = generateEliminationTournament(config, promo.roster);
+      else if (config.type === 'roundrobin') tournament = generateRoundRobinTournament(config, promo.roster);
+      else if (config.type === 'tagRoundRobin') tournament = generateTagRoundRobin(config, promo.roster);
+      return withPromo(state, pid, { ...promo, activeTournament: tournament });
     }
 
     case 'CHOOSE_G1_DRAFT': {
       const { chosenId } = action.payload;
-      const chosen = state.g1DraftOptions.find(w => w.id === chosenId);
+      const chosen = promo.g1DraftOptions.find(w => w.id === chosenId);
       if (!chosen) return state;
 
-      const newSelected = [...state.g1DraftSelected, chosen];
-      const rejected = state.g1DraftOptions.filter(w => w.id !== chosenId);
+      const newSelected = [...promo.g1DraftSelected, chosen];
+      const rejected = promo.g1DraftOptions.filter(w => w.id !== chosenId);
 
-      // Los rechazados vuelven al pool disponible (en posición aleatoria)
-      let newAvailable = [...state.g1DraftAvailable];
+      let newAvailable = [...promo.g1DraftAvailable];
       rejected.forEach(w => {
         const insertAt = Math.floor(Math.random() * (newAvailable.length + 1));
         newAvailable.splice(insertAt, 0, w);
       });
 
-      // ¿Ya completamos el target?
-      if (newSelected.length >= state.g1DraftTarget || newAvailable.length === 0) {
-        const finalParticipants = newSelected.slice(0, state.g1DraftTarget);
-        const config = SPECIAL_MONTHS[state.currentMonth];
+      if (newSelected.length >= promo.g1DraftTarget || newAvailable.length === 0) {
+        const finalParticipants = newSelected.slice(0, promo.g1DraftTarget);
+        const promoConfig = getPromotion(pid);
+        const config = promoConfig?.specialMonths?.[state.currentMonth];
         const fakeRoster = finalParticipants.map(w => ({ ...w, status: 'active', points: 9999 }));
         const tournament = generateRoundRobinTournament({ ...config, participants: finalParticipants.length }, fakeRoster);
-        // override participants to be exactly our draft picks
         tournament.participants = finalParticipants;
-        return {
-          ...state,
+        return withPromo(state, pid, {
+          ...promo,
           g1DraftActive: false,
           g1DraftSelected: [],
           g1DraftOptions: [],
           g1DraftAvailable: [],
           activeTournament: tournament,
-        };
+        });
       }
 
-      // Siguiente ronda: 3 opciones del pool
       const nextOptions = newAvailable.slice(0, 3);
       const nextAvailable = newAvailable.slice(3);
-      return {
-        ...state,
+      return withPromo(state, pid, {
+        ...promo,
         g1DraftSelected: newSelected,
         g1DraftOptions: nextOptions,
         g1DraftAvailable: nextAvailable,
-      };
+      });
     }
 
     case 'CANCEL_G1_DRAFT': {
-      return {
-        ...state,
+      return withPromo(state, pid, {
+        ...promo,
         g1DraftActive: false,
         g1DraftSelected: [],
         g1DraftOptions: [],
         g1DraftAvailable: [],
-      };
+      });
     }
 
     case 'RESOLVE_TOURNAMENT_MATCH': {
       const { tournamentType, matchId, winnerId, winningSide, roundId, dayId } = action.payload;
-      const t = JSON.parse(JSON.stringify(state.activeTournament)); // deep clone
-      let newRoster = [...state.roster];
-      let recentEvent = state.recentEvent;
+      const t = JSON.parse(JSON.stringify(promo.activeTournament));
+      let newRoster = [...promo.roster];
+      let recentEvent = promo.recentEvent;
 
       if (tournamentType === 'elimination') {
         const round = t.rounds.find(r => r.id === roundId);
@@ -739,19 +708,16 @@ function gameReducer(state, action) {
         newRoster = newRoster.map(w => w.id === winnerId ? { ...w, points: (w.points||0)+1, monthlyPoints: (w.monthlyPoints||0)+1 } : w);
 
         const allResolved = round.matches.every(m => m.winnerId !== null);
-        // Helper: get winner wrestler from a match
         const getWinner = (m) => m.winnerId === m.wrestlerA?.id ? m.wrestlerA : m.wrestlerB;
 
         if (allResolved) {
           if (roundId === 'r32') {
-            // 32-player: llenar Segunda Ronda con ganadores de Primera Ronda
             const r16 = t.rounds.find(r => r.id === 'r16');
             for (let i = 0; i < r16.matches.length; i++) {
               r16.matches[i].wrestlerA = getWinner(round.matches[i * 2]);
               r16.matches[i].wrestlerB = getWinner(round.matches[i * 2 + 1]);
             }
           } else if (roundId === 'r16') {
-            // Llenar Cuartos de final con los ganadores de la Segunda Ronda
             const qf = t.rounds.find(r => r.id === 'qf');
             for (let i = 0; i < qf.matches.length; i++) {
               qf.matches[i].wrestlerA = getWinner(round.matches[i * 2]);
@@ -778,16 +744,29 @@ function gameReducer(state, action) {
             const logEntry = {
               id: Date.now() + Math.random(),
               year: state.currentYear, month: state.currentMonth,
-              isTitleMatch: false,
-              isTournamentFinal: true,
-              belt: null,
-              title: `Final — ${t.name}`,
-              winnerName,
-              loserName,
+              isTitleMatch: false, isTournamentFinal: true,
+              belt: null, title: `Final — ${t.name}`,
+              winnerName, loserName,
               winnerId, winningSide: null,
               time: new Date().toLocaleTimeString(),
             };
-            return { ...state, activeTournament: t, roster: newRoster, recentEvent, matchLog: [logEntry, ...state.matchLog] };
+            const promoConfig = getPromotion(pid);
+            const promoSN = promoConfig?.shortName ?? pid.toUpperCase();
+            // Award title for elimination tournaments
+            let newChampElim = { ...promo.champions };
+            if (t.key === 'ajt' || t.key === 'kotr') {
+              const winnerWrestler = t.participants.find(p => p.id === winnerId);
+              if (winnerWrestler) newChampElim.junior = winnerWrestler;
+            } else if (t.key === 'njc') {
+
+              // NJC winner gets a world title shot — award if vacant
+              const winnerWrestler = t.participants.find(p => p.id === winnerId);
+              if (winnerWrestler && !newChampElim.world) newChampElim.world = winnerWrestler;
+            }
+            const newsEntry = { id: logEntry.id, eventType: 'tournamentFinal', text: `${winnerName} gana el ${t.name}`, month: state.currentMonth, year: state.currentYear, promoId: pid, promoShortName: promoSN };
+            const newFeed = [newsEntry, ...(state.globalNewsFeed||[])].slice(0, 200);
+            const s2 = withPromo(state, pid, { ...promo, activeTournament: t, roster: newRoster, recentEvent, champions: newChampElim, matchLog: [logEntry, ...promo.matchLog] });
+            return { ...s2, globalNewsFeed: newFeed };
           }
         }
       } else if (tournamentType === 'roundrobin' || tournamentType === 'tagRoundRobin') {
@@ -798,7 +777,6 @@ function gameReducer(state, action) {
 
           const isTag = tournamentType === 'tagRoundRobin';
 
-          // Nombre del ganador y perdedor
           let winnerName, loserName;
           if (isTag) {
             const winnerTeam = t.teams.find(tm => tm.id === t.winnerId);
@@ -814,42 +792,51 @@ function gameReducer(state, action) {
 
           recentEvent = { type: 'tournament', message: `🏆 ¡${winnerName} es el ganador del ${t.name}!` };
 
-          // Auto-asignar campeón según el tipo de torneo
-          let newChampions = { ...state.champions };
+          let newChampions = { ...promo.champions };
           if (t.key === 'bosj') {
-            // BOSJ → Campeón Junior
             const winnerWrestler = t.participants.find(p => String(p.id) === String(t.winnerId));
             if (winnerWrestler) newChampions.junior = winnerWrestler;
-          } else if (t.key === 'wtl') {
-            // WTL → Campeón Tag (guardado como objeto con nombre del equipo)
+          } else if (t.key === 'wtl' || t.key === 'rwtl') {
             const winnerTeam = t.teams.find(tm => tm.id === t.winnerId);
             if (winnerTeam) {
               newChampions.tag = { id: winnerTeam.id, name: winnerTeam.name, style: 'Tag Team', members: winnerTeam.members };
             }
+          } else if (t.key === 'nwa_jr_rr') {
+            // NWA Jr Round Robin winner becomes Jr champion
+            const winnerWrestler = t.participants.find(p => String(p.id) === String(t.winnerId));
+            if (winnerWrestler) newChampions.junior = winnerWrestler;
+          } else if (t.key === 'nwa_tl' || t.key === 'wwf_tl') {
+            // Tag league winner becomes tag champion
+            const winnerTeam = t.teams.find(tm => tm.id === t.winnerId);
+            if (winnerTeam) newChampions.tag = { id: winnerTeam.id, name: winnerTeam.name, style: 'Tag Team', members: winnerTeam.members };
+          } else if (t.key === 'cc') {
+            // Champion Carnival winner becomes PWF World Heavyweight Champion
+            const winnerWrestler = t.participants.find(p => String(p.id) === String(t.winnerId));
+            if (winnerWrestler) newChampions.world = winnerWrestler;
           }
 
-          // Agregar al historial de títulos
           const newMatchLog = [{
             id: Date.now() + Math.random(),
             year: state.currentYear, month: state.currentMonth,
-            isTitleMatch: false,
-            isTournamentFinal: true,
-            belt: null,
-            title: `Final — ${t.name}`,
-            winnerName,
-            loserName,
+            isTitleMatch: false, isTournamentFinal: true,
+            belt: null, title: `Final — ${t.name}`,
+            winnerName, loserName,
             winnerId: winnerId || null, winningSide: winningSide || null,
             time: new Date().toLocaleTimeString(),
-          }, ...state.matchLog];
+          }, ...promo.matchLog];
 
-          return { ...state, activeTournament: t, roster: newRoster, recentEvent, champions: newChampions, matchLog: newMatchLog };
+          const promoConfig2 = getPromotion(pid);
+          const promoSN2 = promoConfig2?.shortName ?? pid.toUpperCase();
+          const newsEntry2 = { id: Date.now()+Math.random(), eventType: 'tournamentFinal', text: `${winnerName} gana el ${t.name}`, month: state.currentMonth, year: state.currentYear, promoId: pid, promoShortName: promoSN2 };
+          const newFeed2 = [newsEntry2, ...(state.globalNewsFeed||[])].slice(0, 200);
+          const s3 = withPromo(state, pid, { ...promo, activeTournament: t, roster: newRoster, recentEvent, champions: newChampions, matchLog: newMatchLog });
+          return { ...s3, globalNewsFeed: newFeed2 };
         } else {
           const day = t.days.find(d => d.id === dayId);
           const match = day.matches.find(m => m.id === matchId);
           if (tournamentType === 'roundrobin') {
             match.winnerId = winnerId;
             const wId = winnerId === 'draw' ? null : winnerId;
-            // Usar String() para coincidir con las keys del standings object
             if (wId) {
               if (t.standings[String(wId)]) t.standings[String(wId)].points += 2;
               newRoster = newRoster.map(w => w.id === wId ? { ...w, points: (w.points||0)+1, monthlyPoints: (w.monthlyPoints||0)+1 } : w);
@@ -877,7 +864,6 @@ function gameReducer(state, action) {
           if (allDaysDone && !t.finalMatch && t.days.length > 0) {
             const sortedIds = Object.keys(t.standings).sort((a, b) => t.standings[b].points - t.standings[a].points);
             if (tournamentType === 'roundrobin') {
-              // String(p.id) para coincidir con las keys del standings
               const pA = t.participants.find(p => String(p.id) === sortedIds[0]);
               const pB = t.participants.find(p => String(p.id) === sortedIds[1]);
               t.finalMatch = { id: 't_final', type: 'singles', wrestlerA: pA, wrestlerB: pB, winnerId: null };
@@ -891,153 +877,243 @@ function gameReducer(state, action) {
           }
         }
       }
-      return { ...state, activeTournament: t, roster: newRoster, recentEvent };
+      return withPromo(state, pid, { ...promo, activeTournament: t, roster: newRoster, recentEvent });
     }
 
-    case 'RESET_STATE':
-      return { ...INITIAL_STATE, roster: roster1980.map(w => ({ ...w, points: 0, monthlyPoints: 0 })) };
+    case 'RESET_STATE': {
+      const freshPromos = {};
+      Object.keys(state.promotions).forEach(id => { freshPromos[id] = makePromoState(id); });
+      return { ...INITIAL_STATE, promotions: freshPromos };
+    }
 
     case 'CLEAR_RECENT_EVENT':
-      return { ...state, recentEvent: null };
+      return withPromo(state, pid, { ...promo, recentEvent: null });
 
     case 'ADVANCE_YEAR': {
       const nextYear = state.currentYear + 1;
-      const retirements = [];
-      let nextRoster = [];
-      state.roster.forEach(w => {
-        if (shouldRetire(w, nextYear)) retirements.push({ ...w, retiredAt: nextYear });
-        else nextRoster.push({ ...w, points: 0, monthlyPoints: 0 });
-      });
-      // Agregamos luchadores nuevos del roster del próximo año que no estén ya
-      const newYearRoster = getRosterForYear(nextYear);
-      const existingIds = new Set(nextRoster.map(w => w.id));
-      const newArrivals = [];
-      newYearRoster.forEach(w => {
-        if (!existingIds.has(w.id)) {
-          nextRoster.push({ ...w, points: 0, monthlyPoints: 0 });
-          newArrivals.push(w);
+      let newPromos = { ...state.promotions };
+
+      // Process each active promotion
+      const active = getActivePromotions(nextYear);
+      // Also include promotions that were active last year (for folding)
+      const allKeys = Object.keys(newPromos);
+
+      for (const promoId of allKeys) {
+        const p = newPromos[promoId];
+        const promoConfig = getPromotion(promoId);
+        const loader = ROSTER_LOADERS[promoId];
+
+        const retirements = [];
+        let nextRoster = [];
+        p.roster.forEach(w => {
+          if (shouldRetire(w, nextYear)) retirements.push({ ...w, retiredAt: nextYear });
+          else nextRoster.push({ ...w, points: 0, monthlyPoints: 0 });
+        });
+
+        if (loader) {
+          const newYearRoster = loader.getForYear(nextYear);
+          const existingIds = new Set(nextRoster.map(w => w.id));
+          const newArrivals = [];
+          newYearRoster.forEach(w => {
+            if (!existingIds.has(w.id)) {
+              nextRoster.push({ ...w, points: 0, monthlyPoints: 0 });
+              newArrivals.push(w);
+            }
+          });
+
+          let nextChampions = { ...p.champions };
+          retirements.forEach(r => {
+            Object.keys(nextChampions).forEach(belt => { if (nextChampions[belt]?.id === r.id) nextChampions[belt] = null; });
+          });
+
+          const { newRoster, careerEnded: evtCareerEnded, newChampions, newLog, newEvents } = processEvents(nextRoster, nextChampions, p.eventLog, 1, nextYear);
+
+          const arrivalEvents = newArrivals.map(w => {
+            const age = nextYear - w.birthYear;
+            const ageMod = getAgeModifier(age);
+            const juniorMod = w.weightClass === 'junior' ? 0.7 : 1.0;
+            const effLevel = Math.max(1, Math.round(w.level * ageMod * juniorMod));
+            const weightLabel = w.weightClass === 'junior' ? 'Junior' : 'Pesado';
+            return {
+              id: Date.now() + Math.random(),
+              year: nextYear, month: 1,
+              type: 'success', eventType: 'return',
+              text: `🆕 ${w.name} (${weightLabel} · ${w.style}) se incorpora al roster. LVL ${effLevel}.`,
+            };
+          });
+          const finalLog = [...arrivalEvents, ...newLog].slice(0, 50);
+
+          const wonWinner = [...p.roster]
+            .filter(w => w.status === 'active' && (w.points || 0) > 0)
+            .sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+          const wonEntry = wonWinner ? {
+            id: `won_${promoId}_${state.currentYear}`,
+            year: state.currentYear, month: 12,
+            isTitleMatch: false, isTournamentFinal: false, isWON: true,
+            winnerName: wonWinner.name, loserName: null, belt: null,
+            title: `WON Wrestler of the Year ${state.currentYear} (${promoConfig?.shortName ?? promoId.toUpperCase()})`,
+          } : null;
+          const finalMatchLog = wonEntry ? [...p.matchLog, wonEntry] : p.matchLog;
+
+          const yearRecord = { year: state.currentYear, retirements: retirements.map(r => r.name), matchLog: p.matchLog.filter(m => m.year === state.currentYear) };
+          const allNewEvents = [...newEvents, ...arrivalEvents];
+
+          newPromos[promoId] = {
+            ...p,
+            roster: newRoster,
+            retiredRoster: [...p.retiredRoster, ...retirements, ...evtCareerEnded],
+            champions: newChampions, monthlyWorkers: [], monthlyShows: [], activeTournament: null,
+            currentShowIndex: 0, eventLog: finalLog, matchLog: finalMatchLog,
+            yearHistory: [...p.yearHistory, yearRecord],
+            monthlyEventSeries: null,
+            pendingMonthEvents: allNewEvents,
+            workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [], workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
+          };
         }
-      });
-      let nextChampions = { ...state.champions };
-      retirements.forEach(r => {
-        Object.keys(nextChampions).forEach(belt => { if (nextChampions[belt]?.id === r.id) nextChampions[belt] = null; });
-      });
-      const { newRoster, careerEnded: evtCareerEnded, newChampions, newLog, newEvents } = processEvents(nextRoster, nextChampions, state.eventLog, 1, nextYear);
-      // Generar eventos de llegada de nuevos luchadores
-      const arrivalEvents = newArrivals.map(w => {
-        const age = nextYear - w.birthYear;
-        const ageMod = getAgeModifier(age);
-        const juniorMod = w.weightClass === 'junior' ? 0.7 : 1.0;
-        const effLevel = Math.max(1, Math.round(w.level * ageMod * juniorMod));
-        const weightLabel = w.weightClass === 'junior' ? 'Junior' : 'Pesado';
-        return {
-          id: Date.now() + Math.random(),
-          year: nextYear,
-          month: 1,
-          type: 'success',
-          eventType: 'return',
-          text: `🆕 ${w.name} (${weightLabel} · ${w.style}) se incorpora al roster. LVL ${effLevel}.`,
-        };
-      });
-      const finalLog = [...arrivalEvents, ...newLog].slice(0, 50);
+      }
 
-      // ── WON Wrestler of the Year ──────────────────────────────────────────
-      const wonWinner = [...state.roster]
-        .filter(w => w.status === 'active' && (w.points || 0) > 0)
-        .sort((a, b) => (b.points || 0) - (a.points || 0))[0];
-      const wonEntry = wonWinner ? {
-        id: `won_${state.currentYear}`,
-        year: state.currentYear,
-        month: 12,
-        isTitleMatch: false,
-        isTournamentFinal: false,
-        isWON: true,
-        winnerName: wonWinner.name,
-        loserName: null,
-        belt: null,
-        title: `WON Wrestler of the Year ${state.currentYear}`,
-      } : null;
-      const finalMatchLog = wonEntry ? [...state.matchLog, wonEntry] : state.matchLog;
-
-      const yearRecord = { year: state.currentYear, retirements: retirements.map(r => r.name), matchLog: state.matchLog.filter(m => m.year === state.currentYear) };
-      const allNewEvents = [...newEvents, ...arrivalEvents];
       return {
         ...state,
-        currentYear: nextYear, currentMonth: 1, phase: 'booking',
-        roster: newRoster,
-        retiredRoster: [...state.retiredRoster, ...retirements, ...evtCareerEnded],
-        champions: newChampions, monthlyWorkers: [], monthlyShows: [], activeTournament: null,
-        currentShowIndex: 0, eventLog: finalLog, matchLog: finalMatchLog,
-        yearHistory: [...state.yearHistory, yearRecord],
-        monthlyEventSeries: null,
-        pendingMonthEvents: allNewEvents,
-        workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [], workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
+        currentYear: nextYear,
+        currentMonth: 1,
+        phase: 'booking',
+        promotions: newPromos,
       };
     }
 
     case 'SET_CHAMPION': {
       const { belt, wrestlerId } = action.payload;
-      const wrestler = state.roster.find(w => w.id === wrestlerId) || null;
-      return { ...state, champions: { ...state.champions, [belt]: wrestler } };
+      const wrestler = promo.roster.find(w => w.id === wrestlerId) || null;
+      return withPromo(state, pid, { ...promo, champions: { ...promo.champions, [belt]: wrestler } });
     }
 
     case 'CLEAR_MONTH_EVENTS':
-      return { ...state, pendingMonthEvents: [] };
+      if (!promo) return state;
+      return withPromo(state, pid, { ...promo, pendingMonthEvents: [] });
 
     case 'ADVANCE_MONTH': {
       const next = state.currentMonth + 1;
       if (next > 12) return state;
-      const { newRoster, careerEnded, newChampions, newLog, newEvents } = processEvents(state.roster, state.champions, state.eventLog, next, state.currentYear);
-      const rosterReset = newRoster.map(w => ({ ...w, monthlyPoints: 0 }));
+
+      let newPromos = { ...state.promotions };
+      let newGlobalFeedMonth = [...(state.globalNewsFeed || [])];
+      for (const promoId of Object.keys(newPromos)) {
+        const p = newPromos[promoId];
+        const { newRoster, careerEnded, newChampions, newLog, newEvents } = processEvents(p.roster, p.champions, p.eventLog, next, state.currentYear);
+        const rosterReset = newRoster.map(w => ({ ...w, monthlyPoints: 0 }));
+        // Tag events with promotion and push to global feed
+        const promoConfig = getPromotion(promoId);
+        const taggedEvents = newEvents.map(ev => ({ ...ev, promoId, promoShortName: promoConfig?.shortName ?? promoId.toUpperCase() }));
+        newGlobalFeedMonth = [...taggedEvents, ...newGlobalFeedMonth].slice(0, 200);
+        newPromos[promoId] = {
+          ...p,
+          roster: rosterReset, champions: newChampions, eventLog: newLog,
+          retiredRoster: [...p.retiredRoster, ...careerEnded],
+          pendingMonthEvents: newEvents,
+          monthlyWorkers: [], monthlyShows: [], currentShowIndex: 0, activeTournament: null,
+          monthlyEventSeries: null,
+          workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [], workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
+        };
+      }
+
+      // Check for promotion rename events and extraEvents
+      for (const promoId of Object.keys(newPromos)) {
+        const pc = getPromotion(promoId);
+        if (pc?.rename) {
+          const r = pc.rename;
+          if (state.currentYear === r.year && next === r.month) {
+            newGlobalFeedMonth = [{
+              id: Date.now() + Math.random(),
+              eventType: 'titleMatch',
+              text: r.newsText,
+              month: next,
+              year: state.currentYear,
+              promoId,
+              promoShortName: r.shortName,
+            }, ...newGlobalFeedMonth].slice(0, 200);
+          }
+        }
+        // Extra one-off news events (e.g. Turner buyout 1988)
+        if (pc?.extraEvents) {
+          for (const ev of pc.extraEvents) {
+            if (state.currentYear === ev.year && next === ev.month) {
+              const curShortName = getPromotion(promoId)?.shortName ?? promoId.toUpperCase();
+              newGlobalFeedMonth = [{
+                id: Date.now() + Math.random(),
+                eventType: 'tournamentFinal',
+                text: ev.text,
+                month: next,
+                year: state.currentYear,
+                promoId,
+                promoShortName: curShortName,
+              }, ...newGlobalFeedMonth].slice(0, 200);
+            }
+          }
+        }
+      }
+
       return {
         ...state,
-        currentMonth: next, roster: rosterReset, champions: newChampions, eventLog: newLog,
-        retiredRoster: [...state.retiredRoster, ...careerEnded],
-        pendingMonthEvents: newEvents,
-        monthlyWorkers: [], monthlyShows: [], currentShowIndex: 0, activeTournament: null,
-        monthlyEventSeries: null,
-        workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [], workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
+        currentMonth: next,
+        globalNewsFeed: newGlobalFeedMonth,
+        promotions: newPromos,
       };
     }
 
     case 'ADVANCE_MONTH_AND_SELECT': {
       const next = state.currentMonth + 1;
       if (next > 12) return state;
-      const { newRoster, careerEnded: sel_careerEnded, newChampions, newLog, newEvents: sel_newEvents } = processEvents(state.roster, state.champions, state.eventLog, next, state.currentYear);
-      const rosterReset = newRoster.map(w => ({ ...w, monthlyPoints: 0 }));
 
-      const isSpecial = !!SPECIAL_MONTHS[next];
-      let selectionState = {
-        workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [],
-        workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
-      };
+      let newPromos = { ...state.promotions };
+      let newGlobalFeedSelect = [...(state.globalNewsFeed || [])];
+      for (const promoId of Object.keys(newPromos)) {
+        const p = newPromos[promoId];
+        const { newRoster, careerEnded: sel_careerEnded, newChampions, newLog, newEvents: sel_newEvents } = processEvents(p.roster, p.champions, p.eventLog, next, state.currentYear);
+        const rosterReset = newRoster.map(w => ({ ...w, monthlyPoints: 0 }));
 
-      if (!isSpecial) {
-        // Arrancar selección inmediatamente solo para meses normales
-        const champExcludeIds = new Set(
-          ['world', 'secondary'].map(k => newChampions[k]?.id).filter(Boolean)
-        );
-        const available = rosterReset.filter(w => w.status === 'active' && !champExcludeIds.has(w.id));
-        const shuffled = [...available].sort(() => Math.random() - 0.5);
-        const options = shuffled.slice(0, Math.min(2, shuffled.length));
-        const remaining = shuffled.slice(options.length);
-        selectionState = {
-          workerSelectionActive: true,
-          workerSelectionPool: [],
-          workerSelectionOptions: options,
-          workerSelectionAvailable: remaining,
-          workerSelectionCpuLastPick: null,
+        const promoConfig = getPromotion(promoId);
+        const taggedEvents = sel_newEvents.map(ev => ({ ...ev, promoId, promoShortName: promoConfig?.shortName ?? promoId.toUpperCase() }));
+        newGlobalFeedSelect = [...taggedEvents, ...newGlobalFeedSelect].slice(0, 200);
+
+        const isSpecial = !!(promoConfig?.specialMonths?.[next]);
+        let selectionState = {
+          workerSelectionActive: false, workerSelectionPool: [], workerSelectionOptions: [],
+          workerSelectionAvailable: [], workerSelectionCpuLastPick: null,
+        };
+
+        if (!isSpecial && promoId === state.activePromotionId) {
+          const champExcludeIds = new Set(
+            ['world', 'secondary'].map(k => newChampions[k]?.id).filter(Boolean)
+          );
+          const available = rosterReset.filter(w => w.status === 'active' && !champExcludeIds.has(w.id));
+          const shuffled = [...available].sort(() => Math.random() - 0.5);
+          const options = shuffled.slice(0, Math.min(2, shuffled.length));
+          const remaining = shuffled.slice(options.length);
+          selectionState = {
+            workerSelectionActive: true,
+            workerSelectionPool: [],
+            workerSelectionOptions: options,
+            workerSelectionAvailable: remaining,
+            workerSelectionCpuLastPick: null,
+          };
+        }
+
+        newPromos[promoId] = {
+          ...p,
+          roster: rosterReset, champions: newChampions, eventLog: newLog,
+          retiredRoster: [...p.retiredRoster, ...sel_careerEnded],
+          pendingMonthEvents: sel_newEvents,
+          monthlyWorkers: [], monthlyShows: [], currentShowIndex: 0, activeTournament: null,
+          monthlyEventSeries: null,
+          ...selectionState,
         };
       }
 
       return {
         ...state,
-        currentMonth: next, roster: rosterReset, champions: newChampions, eventLog: newLog,
-        retiredRoster: [...state.retiredRoster, ...sel_careerEnded],
-        pendingMonthEvents: sel_newEvents,
-        monthlyWorkers: [], monthlyShows: [], currentShowIndex: 0, activeTournament: null,
-        monthlyEventSeries: null,
-        ...selectionState,
+        currentMonth: next,
+        globalNewsFeed: newGlobalFeedSelect,
+        promotions: newPromos,
       };
     }
 
@@ -1046,24 +1122,37 @@ function gameReducer(state, action) {
   }
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+// ─── Context ─────────────────────────────────────────────────────────────────
 const GameContext = createContext(null);
+
+const SAVE_KEY = 'wrestling_observer_state';
+const SAVE_VERSION = 2; // Bump when state shape changes
 
 export const GameProvider = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE, (init) => {
     try {
-      const saved = localStorage.getItem('njpw_booking_state');
+      const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Version check: discard old single-promotion saves
+        if (!parsed.version || parsed.version < SAVE_VERSION || !parsed.promotions) {
+          console.info('[GameContext] Incompatible save format, starting fresh.');
+          return init;
+        }
+        // Restore with safe defaults for new fields
+        const restoredPromos = {};
+        Object.keys(parsed.promotions).forEach(id => {
+          restoredPromos[id] = {
+            ...makePromoState(id),
+            ...parsed.promotions[id],
+            workerSelectionActive: false,
+            workerSelectionCpuLastPick: null,
+          };
+        });
         return {
           ...init,
           ...parsed,
-          workerSelectionActive: false,
-          workerSelectionPool: parsed.workerSelectionPool || [],
-          workerSelectionOptions: parsed.workerSelectionOptions || [],
-          workerSelectionAvailable: parsed.workerSelectionAvailable || [],
-          workerSelectionCpuLastPick: null,
-          monthlyEventSeries: parsed.monthlyEventSeries || null,
+          promotions: restoredPromos,
         };
       }
     } catch (_) {}
@@ -1071,7 +1160,7 @@ export const GameProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('njpw_booking_state', JSON.stringify(state));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, version: SAVE_VERSION }));
   }, [state]);
 
   return (
@@ -1085,4 +1174,18 @@ export const useGame = () => {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error('useGame debe usarse dentro de GameProvider');
   return ctx;
+};
+
+/** Convenience hook: returns the currently active promotion's state, or null */
+export const useActivePromotion = () => {
+  const { state } = useGame();
+  if (!state.activePromotionId) return null;
+  return state.promotions[state.activePromotionId] ?? null;
+};
+
+/** Convenience hook: returns the config object of the active promotion, or null */
+export const useActivePromotionConfig = () => {
+  const { state } = useGame();
+  if (!state.activePromotionId) return null;
+  return getPromotion(state.activePromotionId) ?? null;
 };

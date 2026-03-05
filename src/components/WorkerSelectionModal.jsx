@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame, useActivePromotion } from '../context/GameContext';
 import { getEffectiveStat, getPrimeStatus, calculateAge } from '../models/Wrestler';
 
 const styleColors = {
@@ -56,9 +56,10 @@ const WorkerCard = ({ wrestler, onChoose }) => {
 
 const WorkerSelectionModal = () => {
   const { state, dispatch } = useGame();
-  const { workerSelectionActive, workerSelectionPool, workerSelectionOptions, workerSelectionCpuLastPick } = state;
+  const promo = useActivePromotion();
+  const { workerSelectionActive, workerSelectionPool, workerSelectionOptions, workerSelectionCpuLastPick } = promo ?? {};
 
-  if (!workerSelectionActive) return null;
+  if (!promo || !workerSelectionActive) return null;
 
   const playerPicks = workerSelectionPool.filter(w => w.pickedBy === 'player');
   const cpuPicks    = workerSelectionPool.filter(w => w.pickedBy === 'cpu');

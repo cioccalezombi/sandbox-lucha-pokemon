@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
-import { useGame } from '../context/GameContext';
-
-const BELT_LABELS = {
-  world:     'IWGP World Heavyweight',
-  secondary: 'IWGP Intercontinental',
-  junior:    'IWGP World Jr. Heavy',
-  tag:       'World Tag Team',
-};
+import { useGame, useActivePromotion, useActivePromotionConfig } from '../context/GameContext';
 
 const ChampionModal = ({ belt, onClose }) => {
   const { state, dispatch } = useGame();
-  const [selected, setSelected] = useState(state.champions[belt]?.id ?? '');
+  const promo = useActivePromotion();
+  const [selected, setSelected] = useState(promo.champions[belt]?.id ?? '');
 
   const handleAssign = () => {
     dispatch({ type: 'SET_CHAMPION', payload: { belt, wrestlerId: selected || null } });
@@ -22,7 +16,7 @@ const ChampionModal = ({ belt, onClose }) => {
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header bg-dark text-white">
-            <h5 className="modal-title" style={{ color: '#faf6ed' }}>Editar — {BELT_LABELS[belt]}</h5>
+            <h5 className="modal-title" style={{ color: '#faf6ed' }}>Editar Campeonato</h5>
             <button className="btn-close btn-close-white" onClick={onClose} />
           </div>
           <div className="modal-body">
@@ -33,7 +27,7 @@ const ChampionModal = ({ belt, onClose }) => {
               onChange={e => setSelected(e.target.value)}
             >
               <option value="">— Vacante —</option>
-              {state.roster
+              {(promo.roster || [])
                 .filter(w => w.status === 'active')
                 .map(w => (
                   <option key={w.id} value={w.id}>{w.name} ({w.style})</option>
@@ -52,8 +46,20 @@ const ChampionModal = ({ belt, onClose }) => {
 };
 
 const ChampionsPanel = () => {
-  const { state } = useGame();
+  const promo = useActivePromotion();
+  const promoConfig = useActivePromotionConfig();
   const [editingBelt, setEditingBelt] = useState(null);
+
+  // Use promotion-specific title names, fall back to generic labels
+  const beltLabels = {
+    world:     promoConfig?.titles?.world     ?? 'World Heavyweight',
+    secondary: promoConfig?.titles?.secondary ?? 'Secondary Title',
+    junior:    promoConfig?.titles?.junior    ?? 'Jr. Heavyweight',
+    tag:       promoConfig?.titles?.tag       ?? 'Tag Team',
+  };
+
+  // Only show belts that exist for this promotion
+  const activeBelts = Object.entries(beltLabels).filter(([, label]) => label !== null);
 
   return (
     <div className="card shadow-sm border-0 mb-4">
@@ -62,8 +68,8 @@ const ChampionsPanel = () => {
       </div>
       <div className="card-body">
         <div className="row g-3">
-          {Object.entries(BELT_LABELS).map(([belt, label]) => {
-            const champ = state.champions[belt];
+          {activeBelts.map(([belt, label]) => {
+            const champ = promo.champions[belt];
             return (
               <div className="col-6 col-md-3" key={belt}>
                 <div
