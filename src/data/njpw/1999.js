@@ -1,45 +1,123 @@
 export const roster1999 = [
 
 {
-  id: "masakazu_fukuda",
-  name: "Masakazu Fukuda",
-  birthYear: 1972,
-  debutYear: 1994,
-  retirementYear: null,
-  weightClass: "heavy",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "All-Rounder",
-  level: 4,
-  hpMax: 95,
-  power: 6,
-  technique: 6,
-  speed: 6,
-  toughness: 6,
-  titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
+id: "masakazu_fukuda",
+name: "Masakazu Fukuda",
+birthYear: 1972,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Submission Specialist",
+level: 4,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
 
 {
-  id: "brian_johnston",
-  name: "Brian Johnston",
-  birthYear: 1973,
-  debutYear: 1999,
-  retirementYear: null,
-  weightClass: "heavy",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "Powerhouse",
-  level: 3,
-  hpMax: 100,
-  power: 7,
-  technique: 5,
-  speed: 4,
-  toughness: 7,
-  titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
-},];
+id: "brian_johnston",
+name: "Brian Johnston",
+birthYear: 1974,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "All-Rounder",
+level: 2,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "meng",
+name: "Meng",
+birthYear: 1959,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 7,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "don_frye",
+name: "Don Frye",
+birthYear: 1965,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Brawler",
+level: 8,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "akira",
+name: "AKIRA",
+birthYear: 1972,
+weightClass: "junior",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "High Flyer",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "minoru_tanaka",
+name: "Minoru Tanaka",
+birthYear: 1972,
+weightClass: "junior",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Technician",
+level: 8,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "katsuyori_shibata",
+name: "Katsuyori Shibata",
+birthYear: 1979,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Brawler",
+level: 10,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "hiroshi_tanahashi",
+name: "Hiroshi Tanahashi",
+birthYear: 1976,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "All-Rounder",
+level: 10,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+}
+
+];

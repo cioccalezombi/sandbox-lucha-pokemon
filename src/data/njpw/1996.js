@@ -1,44 +1,33 @@
-export const roster1996 = [{
-  id: "takashi_iizuka",
-  name: "Takashi Iizuka",
-  birthYear: 1966,
-  debutYear: 1986,
-  retirementYear: null,
-  weightClass: "heavy",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "Brawler",
-  level: 7,
-  hpMax: 110,
-  power: 8,
-  technique: 7,
-  speed: 5,
-  toughness: 8,
-  titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
+export const roster1996 = [
+
+{
+id: "yutaka_yoshie",
+name: "Yutaka Yoshie",
+birthYear: 1974,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
 
 {
-  id: "yutaka_yoshie",
-  name: "Yutaka Yoshie",
-  birthYear: 1974,
-  debutYear: 1994,
-  retirementYear: null,
-  weightClass: "heavy",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "Powerhouse",
-  level: 7,
-  hpMax: 120,
-  power: 9,
-  technique: 6,
-  speed: 4,
-  toughness: 9,
-  titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
-},
+id: "animal_warrior",
+name: "Animal Warrior",
+birthYear: 1960,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 8,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+}
+
 ];

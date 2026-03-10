@@ -1,97 +1,168 @@
 export const roster2005 = [
+
 {
-id: "akira_raiijin",
-name: "Akira Raijin",
-birthYear: 1978,
-debutYear: 2005,
-retirementYear: null,
+id: "kohei_suwama",
+name: "Kohei Suwama",
+birthYear: 1976,
 weightClass: "heavy",
 promotion: "AJPW",
 status: "active",
 unavailableWeeks: 0,
 style: "Powerhouse",
-level: 4,
-hpMax: 91,
-power: 5,
-technique: 3,
-speed: 2,
-toughness: 4,
-titles: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
+level: 9,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
-defenses: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
+
+{
+id: "katsuhiko_nakajima",
+name: "Katsuhiko Nakajima",
+birthYear: 1988,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Technician",
+level: 9,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
+
+{
+id: "giant_bernard",
+name: "Giant Bernard",
+birthYear: 1972,
+weightClass: "heavy",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 8,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
 achievements: []
 },
 
 {
 id: "shuji_kondo",
 name: "Shuji Kondo",
-birthYear: 1981,
-debutYear: 2005,
-retirementYear: null,
-weightClass: "junior",
+birthYear: 1978,
+weightClass: "heavy",
 promotion: "AJPW",
 status: "active",
 unavailableWeeks: 0,
 style: "Powerhouse",
 level: 7,
-hpMax: 103,
-power: 8,
-technique: 5,
-speed: 5,
-toughness: 6,
-titles: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
-},
-defenses: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
-},
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
 achievements: []
 },
 
 {
-id: "brother_yasshi",
-name: "brother YASSHI",
+id: "taru",
+name: "TARU",
+birthYear: 1964,
+weightClass: "heavy",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Heel",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "yasshi",
+name: "YASSHI",
 birthYear: 1982,
-debutYear: 2005,
-retirementYear: null,
 weightClass: "junior",
 promotion: "AJPW",
 status: "active",
 unavailableWeeks: 0,
-style: "Brawler",
+style: "High Flyer",
 level: 6,
-hpMax: 99,
-power: 6,
-technique: 4,
-speed: 5,
-toughness: 7,
-titles: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
-defenses: {
-world: 0,
-secondary: 0,
-junior: 0,
-tag: 0
+
+{
+id: "kikutaro",
+name: "Kikutaro",
+birthYear: 1974,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Technician",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
 },
+
+{
+id: "nosawa_rongai",
+name: "NOSAWA Rongai",
+birthYear: 1976,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Heel",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "chuck_palumbo",
+name: "Chuck Palumbo",
+birthYear: 1971,
+weightClass: "heavy",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 6,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "johnny_stamboli",
+name: "Johnny Stamboli",
+birthYear: 1977,
+weightClass: "heavy",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 5,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "toshizo",
+name: "Toshizo",
+birthYear: 1974,
+weightClass: "junior",
+promotion: "AJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Technician",
+level: 5,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
 achievements: []
 }
-];
+
+]

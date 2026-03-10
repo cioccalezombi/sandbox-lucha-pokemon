@@ -34,3 +34,52 @@ export const getEffectiveLevel = (wrestler, currentYear) => {
   const permanentPenalty = wrestler.permanentPenalty ?? 1.0;
   return Math.max(1, Math.round(wrestler.level * ageMod * juniorMod * permanentPenalty));
 };
+
+/**
+ * Hydrates missing stats (hpMax, power, technique, speed, toughness) 
+ * based on the wrestler's level and style.
+ */
+export const hydrateWrestlerStats = (wrestler) => {
+  // If stats already exist, do nothing
+  if (wrestler.hpMax !== undefined) return wrestler;
+
+  const level = wrestler.level || 5;
+  const style = wrestler.style || "All-Rounder";
+
+  let hpMax = 70 + (level * 5); // Level 1 = 75, Level 10 = 120
+  let power = level;
+  let technique = level;
+  let speed = level;
+  let toughness = level;
+
+  switch (style) {
+    case "Technician":
+    case "Submission Specialist":
+      technique += 2; power -= 1; hpMax -= 5; speed += 1;
+      break;
+    case "Powerhouse":
+    case "Brawler":
+      power += 2; speed -= 2; hpMax += 10; toughness += 2;
+      break;
+    case "High Flyer":
+      speed += 3; power -= 2; toughness -= 1; hpMax -= 5;
+      break;
+    case "Heel":
+      technique += 1; toughness += 1;
+      break;
+    case "All-Rounder":
+    default:
+      break;
+  }
+
+  const clamp = (val) => Math.max(1, Math.min(10, val));
+  
+  return {
+    ...wrestler,
+    hpMax: Math.round(hpMax),
+    power: clamp(power),
+    technique: clamp(technique),
+    speed: clamp(speed),
+    toughness: clamp(toughness)
+  };
+};

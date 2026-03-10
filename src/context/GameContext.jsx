@@ -4,7 +4,7 @@ import { getRosterForYear as getAJPWRoster, roster1980 as ajpwRoster1980 } from 
 import { getRosterForYear as getWWFRoster, roster1980 as wwfRoster1980 } from '../data/wwf/index';
 import { PROMOTIONS, getActivePromotions, getPromotion, US_CITIES, getSeriesForYearMonth, getTitleName } from '../data/promotions';
 import { getRosterForYear as getJCPRoster, roster1980 as jcpRoster1980 } from '../data/jcp/index';
-import { calculateAge, getAgeModifier, getEffectiveLevel } from '../models/Wrestler';
+import { calculateAge, getAgeModifier, getEffectiveLevel, hydrateWrestlerStats } from '../models/Wrestler';
 import { generateEliminationTournament, generateRoundRobinTournament, generateTagRoundRobin } from '../models/TournamentModel';
 
 // ─── Re-export for consumers who imported from here ─────────────────────────
@@ -25,7 +25,7 @@ const ROSTER_LOADERS = {
 // ─── Estado inicial de una sola promoción ────────────────────────────────────
 const makePromoState = (promotionId) => {
   const loader = ROSTER_LOADERS[promotionId];
-  const base = loader ? loader.base.map(w => ({ ...w, points: 0, monthlyPoints: 0 })) : [];
+  const base = loader ? loader.base.map(w => ({ ...hydrateWrestlerStats(w), points: 0, monthlyPoints: 0 })) : [];
   return {
     roster: base,
     retiredRoster: [],
@@ -916,7 +916,7 @@ function gameReducer(state, action) {
           const newArrivals = [];
           newYearRoster.forEach(w => {
             if (!existingIds.has(w.id)) {
-              nextRoster.push({ ...w, points: 0, monthlyPoints: 0 });
+              nextRoster.push({ ...hydrateWrestlerStats(w), points: 0, monthlyPoints: 0 });
               newArrivals.push(w);
             }
           });

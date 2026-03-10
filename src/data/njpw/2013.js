@@ -1,42 +1,78 @@
-export const roster2013 = [{
-  id: "bushi",
-  name: "BUSHI",
-  birthYear: 1983,
-  debutYear: 2013,
-  retirementYear: null,
-  weightClass: "junior",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "High Flyer",
-  level: 7,
-  hpMax: 94,
-  power: 5,
-  technique: 7,
-  speed: 8,
-  toughness: 6,
-  titles:   { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
-},
+export const roster2013 = [
+
 {
-  id: "yohei_komatsu",
-  name: "Yohei Komatsu",
-  birthYear: 1988,
-  debutYear: 2013,
-  retirementYear: null,
-  weightClass: "junior",
-  promotion: "NJPW",
-  status: "active",
-  unavailableWeeks: 0,
-  style: "All-Rounder",
-  level: 4,
-  hpMax: 88,
-  power: 5,
-  technique: 6,
-  speed: 7,
-  toughness: 5,
-  titles:   { world: 0, secondary: 0, junior: 0, tag: 0 },
-  defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
-  achievements: []
-},];
+id: "yohei_komatsu",
+name: "Yohei Komatsu",
+birthYear: 1991,
+weightClass: "junior",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "High Flyer",
+level: 4,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "sho_tanaka",
+name: "Sho Tanaka",
+birthYear: 1989,
+weightClass: "junior",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "All-Rounder",
+level: 4,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "alex_shelley",
+name: "Alex Shelley",
+birthYear: 1983,
+weightClass: "junior",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Technician",
+level: 9,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "davey_boy_smith_jr",
+name: "Davey Boy Smith Jr.",
+birthYear: 1985,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "Powerhouse",
+level: 8,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+},
+
+{
+id: "shelton_benjamin",
+name: "Shelton Benjamin",
+birthYear: 1975,
+weightClass: "heavy",
+promotion: "NJPW",
+status: "active",
+unavailableWeeks: 0,
+style: "All-Rounder",
+level: 9,
+titles: { world: 0, secondary: 0, junior: 0, tag: 0 },
+defenses: { world: 0, secondary: 0, junior: 0, tag: 0 },
+achievements: []
+}
+
+];
